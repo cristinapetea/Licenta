@@ -1,3 +1,11 @@
-node_modules/
-.env
+# Node
+server/node_modules/
+server/.env
+
+# Flutter
+client/build/
+client/.dart_tool/
+client/.flutter-plugins*
+client/ios/Pods/
+
 
