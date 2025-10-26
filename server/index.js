@@ -1,11 +1,17 @@
+require('dotenv').config();
 const app = require('./app');
+const connectDB = require('./config/db');
 
-const port = 3000;
+const PORT = process.env.PORT || 3000;
 
-app.get('/', (req, res) => {
-  res.send('Hello world');
-});
-
-app.listen(port, () => {
-  console.log(`Server listening on http://localhost:${port}`);
-});
+(async () => {
+  try {
+    await connectDB();                  //  conectare la Mongo Atlas
+    app.listen(PORT, () => {
+      console.log(`Server listening on http://localhost:${PORT}`);
+    });
+  } catch (err) {
+    console.error('Failed to start server:', err.message);
+    process.exit(1);
+  }
+})();

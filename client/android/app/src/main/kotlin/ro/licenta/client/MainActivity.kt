@@ -1,5 +1,5 @@
-package ro.licenta.client
+package ro.licenta.client   //  EXACT ca în manifest / applicationId
 
 import io.flutter.embedding.android.FlutterActivity
 
-class MainActivity : FlutterActivity()
+class MainActivity: FlutterActivity()
