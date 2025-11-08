@@ -4,13 +4,10 @@ const UserModel = require('../model/User');
 // POST /api/auth/register
 exports.register = async (req, res) => {
   try {
-    const { firstName, lastName, age, occupation, email, password } = req.body;
+    const { name, email, password } = req.body;
 
     const doc = await UserModel.create({
-      firstName,
-      lastName,
-      age: Number(age),         // dacă vine ca string din Flutter
-      occupation,
+      name,
       email,
       password,                 // (hash adăugăm ulterior)
     });
