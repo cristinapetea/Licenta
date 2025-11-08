@@ -50,6 +50,9 @@ class _SignUpPageState extends State<SignUpPage> {
       if (res.statusCode == 200 || res.statusCode == 201) {
         ScaffoldMessenger.of(context)
             .showSnackBar(const SnackBar(content: Text('Account created!')));
+
+      Navigator.pushReplacementNamed(context, '/login');
+
       } else {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text('Register failed: ${res.statusCode} ${res.body}')));

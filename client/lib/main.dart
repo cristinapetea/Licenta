@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'pages/login_page.dart';
+import 'pages/signup_page.dart';
+import 'pages/create_join_page.dart';
+
 
 
 void main() => runApp(const ChoreBuddzApp());
@@ -10,7 +13,7 @@ class ChoreBuddzApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // paleta noastră
+   
     const paleRoyalBlue = Color(0xFF7E9BFF); // albastru pal regal
     const palePurple    = Color(0xFFD3B8FF); // mov pal
     const deepIndigo    = Color(0xFF4B4FA7);
@@ -28,7 +31,14 @@ class ChoreBuddzApp extends StatelessWidget {
         useMaterial3: true,
         textTheme: GoogleFonts.poppinsTextTheme(),
       ),
-      home: const LandingPage(),
+      // IMPORTANT:
+      initialRoute: '/landing',
+      routes: {
+        '/landing'   : (_) => const LandingPage(),
+        '/login'     : (_) => const LoginPage(),
+        '/signup'    : (_) => const SignUpPage(),
+        '/createJoin': (_) => const CreateJoinPage(), 
+      },
     );
   }
 }
