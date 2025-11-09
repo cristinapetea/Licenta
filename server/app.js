@@ -12,4 +12,6 @@ app.get('/health', (_req, res) => res.send('ok'));
 // rutele tale de auth
 app.use('/api/auth', require('./routers/auth.router'));
 
+app.use('/api/households', require('./routers/household.router'));
+
 module.exports = app;

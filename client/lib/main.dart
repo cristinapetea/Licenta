@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'pages/login_page.dart';
 import 'pages/signup_page.dart';
 import 'pages/create_join_page.dart';
+import 'pages/home_page.dart';
 
 
 
@@ -38,6 +39,7 @@ class ChoreBuddzApp extends StatelessWidget {
         '/login'     : (_) => const LoginPage(),
         '/signup'    : (_) => const SignUpPage(),
         '/createJoin': (_) => const CreateJoinPage(), 
+        '/home'      : (_) => const HomePage(),
       },
     );
   }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Culorile gradientului (aceleași ca în login/signup)
 const Color kPaleRoyalBlue = Color(0xFF7E9BFF);
 const Color kPalePurple    = Color(0xFFD3B8FF);
 const Color kPalePink      = Color(0xFFFFD8F1);
@@ -36,12 +35,10 @@ class _CreateJoinPageState extends State<CreateJoinPage>
     with SingleTickerProviderStateMixin {
   late final TabController _tabs;
 
-  // CREATE controllers
   final _createForm = GlobalKey<FormState>();
   final _homeName   = TextEditingController();
   final _homeAddr   = TextEditingController();
 
-  // JOIN controllers
   final _joinForm   = GlobalKey<FormState>();
   final _inviteCode = TextEditingController();
 
@@ -63,31 +60,22 @@ class _CreateJoinPageState extends State<CreateJoinPage>
   Future<void> _createHome() async {
     if (!_createForm.currentState!.validate()) return;
 
-    // TODO: Apelează backend-ul tău aici
-    // final res = await http.post(Uri.parse('${Api.base}/homes'), body: ...)
-    // if (res.ok) -> mergi mai departe în aplicație (ex. HomePage)
-
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Locuință creată!')),
+      const SnackBar(content: Text('Home created!')),
     );
 
-    // Exemplu navigare după succes:
     Navigator.pushReplacementNamed(context, '/home');
   }
 
   Future<void> _joinHome() async {
     if (!_joinForm.currentState!.validate()) return;
 
-    // TODO: Apelează backend-ul tău aici
-    // final res = await http.post(Uri.parse('${Api.base}/homes/join'), body: {'code': _inviteCode.text.trim()})
-
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Alăturare reușită!')),
+      const SnackBar(content: Text('Successfully joined!')),
     );
 
-    // Exemplu navigare după succes:
     Navigator.pushReplacementNamed(context, '/home');
   }
 
@@ -117,8 +105,8 @@ class _CreateJoinPageState extends State<CreateJoinPage>
                       labelColor: Colors.black,
                       unselectedLabelColor: Colors.black54,
                       tabs: const [
-                        Tab(text: 'Creează'),
-                        Tab(text: 'Alătură-te'),
+                        Tab(text: 'Create'),
+                        Tab(text: 'Join'),
                       ],
                     ),
                   ),
@@ -128,7 +116,6 @@ class _CreateJoinPageState extends State<CreateJoinPage>
                     child: TabBarView(
                       controller: _tabs,
                       children: [
-                        // ----------------- CREATE TAB -----------------
                         SingleChildScrollView(
                           padding: const EdgeInsets.all(20),
                           child: Card(
@@ -144,7 +131,7 @@ class _CreateJoinPageState extends State<CreateJoinPage>
                                   crossAxisAlignment: CrossAxisAlignment.stretch,
                                   children: [
                                     const Text(
-                                      'Nume locuință',
+                                      'Home name',
                                       style: TextStyle(
                                         fontWeight: FontWeight.w600,
                                         fontSize: 16,
@@ -154,18 +141,17 @@ class _CreateJoinPageState extends State<CreateJoinPage>
                                     TextFormField(
                                       controller: _homeName,
                                       decoration: const InputDecoration(
-                                        hintText: 'Casa noastră',
                                         border: OutlineInputBorder(),
                                       ),
                                       validator: (v) =>
                                           (v == null || v.trim().isEmpty)
-                                              ? 'Completează numele'
+                                              ? 'Enter a name'
                                               : null,
                                     ),
                                     const SizedBox(height: 18),
 
                                     const Text(
-                                      'Adresă (opțional)',
+                                      'Address (optional)',
                                       style: TextStyle(
                                         fontWeight: FontWeight.w600,
                                         fontSize: 16,
@@ -175,7 +161,6 @@ class _CreateJoinPageState extends State<CreateJoinPage>
                                     TextFormField(
                                       controller: _homeAddr,
                                       decoration: const InputDecoration(
-                                        hintText: 'Str. Exemplu, Nr. 123',
                                         border: OutlineInputBorder(),
                                       ),
                                     ),
@@ -195,9 +180,8 @@ class _CreateJoinPageState extends State<CreateJoinPage>
                                           SizedBox(width: 10),
                                           Expanded(
                                             child: Text(
-                                              'Invită membri\n'
-                                              'După creare, vei primi un cod unic pe care îl poți '
-                                              'partaja cu membrii locuinței.',
+                                              'Invite members\n'
+                                              'After creation, you will receive a unique code that you can share with household members.',
                                             ),
                                           ),
                                         ],
@@ -216,7 +200,7 @@ class _CreateJoinPageState extends State<CreateJoinPage>
                                         ),
                                       ),
                                       onPressed: _createHome,
-                                      child: const Text('Creează locuință'),
+                                      child: const Text('Create home'),
                                     ),
                                   ],
                                 ),
@@ -225,7 +209,6 @@ class _CreateJoinPageState extends State<CreateJoinPage>
                           ),
                         ),
 
-                        // ----------------- JOIN TAB -----------------
                         SingleChildScrollView(
                           padding: const EdgeInsets.all(20),
                           child: Card(
@@ -241,7 +224,7 @@ class _CreateJoinPageState extends State<CreateJoinPage>
                                   crossAxisAlignment: CrossAxisAlignment.stretch,
                                   children: [
                                     const Text(
-                                      'Cod de invitație',
+                                      'Invitation code',
                                       style: TextStyle(
                                         fontWeight: FontWeight.w600,
                                         fontSize: 16,
@@ -251,12 +234,11 @@ class _CreateJoinPageState extends State<CreateJoinPage>
                                     TextFormField(
                                       controller: _inviteCode,
                                       decoration: const InputDecoration(
-                                        hintText: 'ABC-123-XYZ',
                                         border: OutlineInputBorder(),
                                       ),
                                       validator: (v) =>
                                           (v == null || v.trim().isEmpty)
-                                              ? 'Introdu codul'
+                                              ? 'Enter the code'
                                               : null,
                                     ),
                                     const SizedBox(height: 16),
@@ -268,9 +250,8 @@ class _CreateJoinPageState extends State<CreateJoinPage>
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: const Text(
-                                        'Cum funcționează?\n'
-                                        'Cere codul de invitație de la un membru existent al '
-                                        'locuinței și introdu-l mai sus.',
+                                        'How it works?\n'
+                                        'Ask an existing household member for the invitation code and enter it above.',
                                       ),
                                     ),
                                     const SizedBox(height: 18),
@@ -286,7 +267,7 @@ class _CreateJoinPageState extends State<CreateJoinPage>
                                         ),
                                       ),
                                       onPressed: _joinHome,
-                                      child: const Text('Alătură-te'),
+                                      child: const Text('Join'),
                                     ),
                                   ],
                                 ),
