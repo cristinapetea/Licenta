@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'signup_page.dart';
 import 'forgot_password_page.dart';
 import 'create_join_page.dart';
+import 'home_page.dart';
 import '../api.dart';
 
 class LoginPage extends StatefulWidget {
@@ -54,6 +55,8 @@ class _LoginPageState extends State<LoginPage> {
         // Parse user data pentru a obține ID-ul real
         final data = jsonDecode(res.body);
         final userId = data['id']?.toString() ?? data['_id']?.toString();
+        final userName = data['name']?.toString();
+        final hasHousehold = data['hasHousehold'] ?? false;
         
         if (userId == null) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -62,13 +65,23 @@ class _LoginPageState extends State<LoginPage> {
           return;
         }
 
-        // După login reușit -> mergi la pagina de "join/alegere locuință" cu userId-ul real
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => CreateJoinPage(userId: userId),
-          ),
-        );
+        // Dacă utilizatorul are deja un household, mergi direct la home
+        if (hasHousehold) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => HomePage(userId: userId, userName: userName),
+            ),
+          );
+        } else {
+          // Altfel, mergi la pagina de "join/alegere locuință" cu userId-ul real
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => CreateJoinPage(userId: userId, userName: userName),
+            ),
+          );
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Login failed: ${res.statusCode} ${res.body}')),

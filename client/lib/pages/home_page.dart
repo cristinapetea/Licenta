@@ -1,7 +1,76 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import '../api.dart';
+import 'profile_page.dart';
 
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+class HomePage extends StatefulWidget {
+  final String? userId;
+  final String? userName;
+  
+  const HomePage({super.key, this.userId, this.userName});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  String? _userId;
+  String? _householdId;
+  int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _userId = widget.userId;
+    _loadHouseholdId();
+  }
+
+  Future<void> _loadHouseholdId() async {
+    if (_userId == null) return;
+    
+    try {
+      final uri = Uri.parse('${Api.base}/api/households/mine');
+      final resp = await http.get(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user': _userId!,
+        },
+      ).timeout(const Duration(seconds: 10));
+
+      if (resp.statusCode == 200) {
+        final households = jsonDecode(resp.body) as List;
+        if (households.isNotEmpty) {
+          setState(() {
+            _householdId = households[0]['_id']?.toString() ?? households[0]['id']?.toString();
+          });
+        }
+      }
+    } catch (e) {
+      print('Error loading household: $e');
+    }
+  }
+
+  void _onTabTapped(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+
+    if (index == 3 && _userId != null) {
+      // Profile tab
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ProfilePage(
+            userId: _userId!,
+            userName: widget.userName,
+            householdId: _householdId,
+          ),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -107,7 +176,8 @@ class HomePage extends StatelessWidget {
           backgroundColor: Colors.white,
           selectedItemColor: paleRoyalBlue,
           unselectedItemColor: Colors.grey,
-
+          currentIndex: _currentIndex,
+          onTap: _onTabTapped,
           items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.home_outlined),

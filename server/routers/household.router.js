@@ -17,8 +17,9 @@ const fakeAuth = (req, res, next) => {
   next();
 };
 
-router.post('/',     fakeAuth, ctrl.create);     // POST /api/households
-router.post('/join', fakeAuth, ctrl.joinByCode); // POST /api/households/join
-router.get('/mine',  fakeAuth, ctrl.mine);       // GET  /api/households/mine
+router.post('/',           fakeAuth, ctrl.create);     // POST /api/households
+router.post('/join',       fakeAuth, ctrl.joinByCode); // POST /api/households/join
+router.get('/mine',        fakeAuth, ctrl.mine);       // GET  /api/households/mine
+router.get('/:id/members', fakeAuth, ctrl.getMembers); // GET  /api/households/:id/members
 
 module.exports = router;

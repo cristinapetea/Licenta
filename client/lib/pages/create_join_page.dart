@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../api.dart';
+import 'home_page.dart';
 
 const Color kPaleRoyalBlue = Color(0xFF7E9BFF);
 const Color kPalePurple    = Color(0xFFD3B8FF);
@@ -29,7 +30,8 @@ class GradientBackground extends StatelessWidget {
 
 class CreateJoinPage extends StatefulWidget {
   final String userId;
-  const CreateJoinPage({super.key, required this.userId});
+  final String? userName;
+  const CreateJoinPage({super.key, required this.userId, this.userName});
 
   @override
   State<CreateJoinPage> createState() => _CreateJoinPageState();
@@ -100,7 +102,12 @@ class _CreateJoinPageState extends State<CreateJoinPage>
       if (resp.statusCode == 201) {
         _toast('Home created!');
         if (!mounted) return;
-        Navigator.pushReplacementNamed(context, '/home');
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => HomePage(userId: widget.userId, userName: widget.userName),
+          ),
+        );
       } else {
         _toast('Create failed: ${resp.body}');
       }
@@ -138,7 +145,12 @@ class _CreateJoinPageState extends State<CreateJoinPage>
       if (resp.statusCode == 200) {
         _toast('Successfully joined!');
         if (!mounted) return;
-        Navigator.pushReplacementNamed(context, '/home');
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => HomePage(userId: widget.userId, userName: widget.userName),
+          ),
+        );
       } else {
         _toast('Join failed: ${resp.body}');
       }

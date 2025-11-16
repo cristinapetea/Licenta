@@ -109,8 +109,20 @@ exports.login = async (req, res) => {
 
     if (!ok) return res.status(401).json({ error: 'Invalid credentials' });
 
-    return res.status(200).json({ id: user._id, name: user.name, email: user.email });
+    // Verifică dacă utilizatorul are deja un household
+    const Household = require('../model/Household');
+    const households = await Household.find({ members: user._id }).select('_id name').limit(1);
+    const hasHousehold = households.length > 0;
+
+    return res.status(200).json({ 
+      id: user._id, 
+      name: user.name, 
+      email: user.email,
+      hasHousehold: hasHousehold,
+      householdId: hasHousehold ? households[0]._id : null,
+    });
   } catch (e) {
+    console.error('Login error:', e);
     return res.status(500).json({ error: 'Server error' });
   }
 };

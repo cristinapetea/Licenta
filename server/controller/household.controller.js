@@ -118,3 +118,54 @@ exports.mine = async (req, res) => {
     return res.status(500).json({ error: e.message || 'Server error' });
   }
 };
+
+// GET /api/households/:id/members - obține membrii unui household
+exports.getMembers = async (req, res) => {
+  try {
+    const userIdStr = req.user?.sub || req.user?.id || req.user;
+    if (!userIdStr) {
+      return res.status(401).json({ error: 'User ID is required' });
+    }
+    
+    const userId = new Types.ObjectId(userIdStr);
+    const householdId = req.params.id;
+    
+    if (!Types.ObjectId.isValid(householdId)) {
+      return res.status(400).json({ error: 'Invalid household ID' });
+    }
+    
+    const hh = await Household.findById(householdId).populate('members', 'name email').populate('owner', 'name email');
+    if (!hh) {
+      return res.status(404).json({ error: 'Household not found' });
+    }
+    
+    // Verifică dacă utilizatorul este membru
+    const isMember = hh.members.some(m => String(m._id) === String(userId));
+    if (!isMember) {
+      return res.status(403).json({ error: 'You are not a member of this household' });
+    }
+    
+    return res.json({
+      household: {
+        id: hh._id,
+        name: hh.name,
+        address: hh.address,
+        inviteCode: hh.inviteCode,
+        owner: {
+          id: hh.owner._id,
+          name: hh.owner.name,
+          email: hh.owner.email,
+        },
+      },
+      members: hh.members.map(m => ({
+        id: m._id,
+        name: m.name,
+        email: m.email,
+        isOwner: String(m._id) === String(hh.owner._id),
+      })),
+    });
+  } catch (e) {
+    console.error('get members error:', e.message || e);
+    return res.status(500).json({ error: e.message || 'Server error' });
+  }
+};
