@@ -51,13 +51,23 @@ class _LoginPageState extends State<LoginPage> {
       if (!mounted) return;
       // Ajustează aici dacă backend-ul tău răspunde cu 200 sau 201
       if (res.statusCode == 200 || res.statusCode == 201) {
-        // opțional: parse token / user
-        // final data = jsonDecode(res.body);
+        // Parse user data pentru a obține ID-ul real
+        final data = jsonDecode(res.body);
+        final userId = data['id']?.toString() ?? data['_id']?.toString();
+        
+        if (userId == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Login response missing user ID')),
+          );
+          return;
+        }
 
-        // După login reușit -> mergi la pagina de "join/alegere locuință"
+        // După login reușit -> mergi la pagina de "join/alegere locuință" cu userId-ul real
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const CreateJoinPage()),
+          MaterialPageRoute(
+            builder: (_) => CreateJoinPage(userId: userId),
+          ),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(

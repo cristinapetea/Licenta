@@ -38,7 +38,7 @@ class ChoreBuddzApp extends StatelessWidget {
         '/landing'   : (_) => const LandingPage(),
         '/login'     : (_) => const LoginPage(),
         '/signup'    : (_) => const SignUpPage(),
-        '/createJoin': (_) => const CreateJoinPage(), 
+        // '/createJoin' removed - now requires userId from login
         '/home'      : (_) => const HomePage(),
       },
     );

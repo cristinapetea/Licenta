@@ -1,4 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import '../api.dart';
 
 const Color kPaleRoyalBlue = Color(0xFF7E9BFF);
 const Color kPalePurple    = Color(0xFFD3B8FF);
@@ -25,7 +28,8 @@ class GradientBackground extends StatelessWidget {
 }
 
 class CreateJoinPage extends StatefulWidget {
-  const CreateJoinPage({super.key});
+  final String userId;
+  const CreateJoinPage({super.key, required this.userId});
 
   @override
   State<CreateJoinPage> createState() => _CreateJoinPageState();
@@ -42,6 +46,9 @@ class _CreateJoinPageState extends State<CreateJoinPage>
   final _joinForm   = GlobalKey<FormState>();
   final _inviteCode = TextEditingController();
 
+  bool _creating = false;
+  bool _joining  = false;
+
   @override
   void initState() {
     super.initState();
@@ -57,26 +64,89 @@ class _CreateJoinPageState extends State<CreateJoinPage>
     super.dispose();
   }
 
+  void _toast(String msg) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+
   Future<void> _createHome() async {
     if (!_createForm.currentState!.validate()) return;
 
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Home created!')),
-    );
+    setState(() => _creating = true);
+    try {
+      final uri = Uri.parse('${Api.base}/api/households');
+      print('Making request to: $uri');
+      print('With userId: ${widget.userId}');
+      
+      final resp = await http
+          .post(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'x-user': widget.userId,
+            },
+            body: jsonEncode({
+              'name': _homeName.text.trim(),
+              'address': _homeAddr.text.trim().isEmpty
+                  ? null
+                  : _homeAddr.text.trim(),
+            }),
+          )
+          .timeout(const Duration(seconds: 30));
 
-    Navigator.pushReplacementNamed(context, '/home');
+      print('Response status: ${resp.statusCode}');
+      print('Response body: ${resp.body}');
+
+      if (resp.statusCode == 201) {
+        _toast('Home created!');
+        if (!mounted) return;
+        Navigator.pushReplacementNamed(context, '/home');
+      } else {
+        _toast('Create failed: ${resp.body}');
+      }
+    } catch (e) {
+      print('Error creating home: $e');
+      if (e.toString().contains('TimeoutException')) {
+        _toast('Server timeout - verifica dacă serverul rulează pe ${Api.base}');
+      } else if (e.toString().contains('Failed host lookup') || e.toString().contains('Connection refused')) {
+        _toast('Nu se poate conecta la server - verifica dacă rulează');
+      } else {
+        _toast('Create failed: $e');
+      }
+    } finally {
+      if (mounted) setState(() => _creating = false);
+    }
   }
 
   Future<void> _joinHome() async {
     if (!_joinForm.currentState!.validate()) return;
 
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Successfully joined!')),
-    );
+    setState(() => _joining = true);
+    try {
+      final uri = Uri.parse('${Api.base}/api/households/join');
+      final resp = await http
+          .post(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'x-user': widget.userId,
+            },
+            body: jsonEncode({'code': _inviteCode.text.trim()}),
+          )
+          .timeout(const Duration(seconds: 10));
 
-    Navigator.pushReplacementNamed(context, '/home');
+      if (resp.statusCode == 200) {
+        _toast('Successfully joined!');
+        if (!mounted) return;
+        Navigator.pushReplacementNamed(context, '/home');
+      } else {
+        _toast('Join failed: ${resp.body}');
+      }
+    } catch (e) {
+      _toast('Join failed: $e');
+    } finally {
+      if (mounted) setState(() => _joining = false);
+    }
   }
 
   @override
@@ -116,6 +186,7 @@ class _CreateJoinPageState extends State<CreateJoinPage>
                     child: TabBarView(
                       controller: _tabs,
                       children: [
+                        // ===== CREATE TAB (layout-ul tău original) =====
                         SingleChildScrollView(
                           padding: const EdgeInsets.all(20),
                           child: Card(
@@ -199,8 +270,16 @@ class _CreateJoinPageState extends State<CreateJoinPage>
                                               BorderRadius.circular(14),
                                         ),
                                       ),
-                                      onPressed: _createHome,
-                                      child: const Text('Create home'),
+                                      onPressed: _creating ? null : _createHome,
+                                      child: _creating
+                                          ? const SizedBox(
+                                              height: 18,
+                                              width: 18,
+                                              child: CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                  color: Colors.white),
+                                            )
+                                          : const Text('Create home'),
                                     ),
                                   ],
                                 ),
@@ -209,6 +288,7 @@ class _CreateJoinPageState extends State<CreateJoinPage>
                           ),
                         ),
 
+                        // ===== JOIN TAB (layout-ul tău original) =====
                         SingleChildScrollView(
                           padding: const EdgeInsets.all(20),
                           child: Card(
@@ -266,8 +346,16 @@ class _CreateJoinPageState extends State<CreateJoinPage>
                                               BorderRadius.circular(14),
                                         ),
                                       ),
-                                      onPressed: _joinHome,
-                                      child: const Text('Join'),
+                                      onPressed: _joining ? null : _joinHome,
+                                      child: _joining
+                                          ? const SizedBox(
+                                              height: 18,
+                                              width: 18,
+                                              child: CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                  color: Colors.white),
+                                            )
+                                          : const Text('Join'),
                                     ),
                                   ],
                                 ),
