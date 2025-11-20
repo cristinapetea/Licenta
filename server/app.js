@@ -21,9 +21,9 @@ app.use((req, res, next) => {
 // ✅ healthcheck GET (trebuie să-ți răspundă "ok" în browser)
 app.get('/health', (_req, res) => res.send('ok'));
 
-// rutele tale de auth
+// Rute
 app.use('/api/auth', require('./routers/auth.router'));
-
 app.use('/api/households', require('./routers/household.router'));
+app.use('/api/tasks', require('./routers/task.router')); // ✅ NOU
 
 module.exports = app;

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'pages/login_page.dart';
 import 'pages/signup_page.dart';
-import 'pages/create_join_page.dart';
+
 import 'pages/home_page.dart';
 
 
@@ -15,7 +15,7 @@ class ChoreBuddzApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
    
-    const paleRoyalBlue = Color(0xFF7E9BFF); // albastru pal regal
+    
     const palePurple    = Color(0xFFD3B8FF); // mov pal
     const deepIndigo    = Color(0xFF4B4FA7);
 
