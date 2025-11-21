@@ -90,7 +90,6 @@ exports.register = async (req, res) => {
   }
 };
 
-
 // POST /api/auth/login
 exports.login = async (req, res) => {
   try {
@@ -123,6 +122,42 @@ exports.login = async (req, res) => {
     });
   } catch (e) {
     console.error('Login error:', e);
+    return res.status(500).json({ error: 'Server error' });
+  }
+};
+
+// POST /api/auth/reset-password
+exports.resetPassword = async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+    
+    if (!email || !newPassword) {
+      return res.status(400).json({ error: 'Email and new password are required' });
+    }
+    
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+    
+    // Găsește user-ul după email
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found with this email' });
+    }
+    
+    // Hash-uiește noua parolă
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    
+    // Actualizează parola
+    user.password = hashedPassword;
+    await user.save();
+    
+    return res.status(200).json({ 
+      message: 'Password updated successfully',
+      email: user.email 
+    });
+  } catch (e) {
+    console.error('Reset password error:', e);
     return res.status(500).json({ error: 'Server error' });
   }
 };
