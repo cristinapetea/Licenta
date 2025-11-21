@@ -107,25 +107,25 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          title: const Text('Task nou de grup'),
+          title: const Text('New Group Task'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
                   controller: titleCtrl,
-                  decoration: const InputDecoration(labelText: 'Titlu *'),
+                  decoration: const InputDecoration(labelText: 'Title *'),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: descCtrl,
-                  decoration: const InputDecoration(labelText: 'Descriere'),
+                  decoration: const InputDecoration(labelText: 'Description'),
                   maxLines: 2,
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   value: selectedMember,
-                  decoration: const InputDecoration(labelText: 'Asignat către'),
+                  decoration: const InputDecoration(labelText: 'Assigned to'),
                   items: _members.map<DropdownMenuItem<String>>((m) {
                     return DropdownMenuItem(
                       value: m['id'].toString(),
@@ -138,7 +138,7 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                 Row(
                   children: [
                     Expanded(
-                      child:                       TextButton.icon(
+                      child: TextButton.icon(
                         onPressed: () async {
                           final date = await showDatePicker(
                             context: dialogContext,
@@ -154,13 +154,13 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                         label: Text(
                           selectedDate != null
                               ? '${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}'
-                              : 'Alege data',
+                              : 'Choose Date',
                         ),
                       ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
-                      child:                       TextButton.icon(
+                      child: TextButton.icon(
                         onPressed: () async {
                           final time = await showTimePicker(
                             context: dialogContext,
@@ -174,7 +174,7 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                         label: Text(
                           selectedTime != null
                               ? '${selectedTime!.hour}:${selectedTime!.minute.toString().padLeft(2, '0')}'
-                              : 'Alege ora',
+                              : 'Choose Time',
                         ),
                       ),
                     ),
@@ -183,7 +183,7 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                 const SizedBox(height: 12),
                 TextField(
                   controller: pointsCtrl,
-                  decoration: const InputDecoration(labelText: 'Puncte'),
+                  decoration: const InputDecoration(labelText: 'Points'),
                   keyboardType: TextInputType.number,
                 ),
               ],
@@ -192,7 +192,7 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Anulează'),
+              child: const Text('Cancel'),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -209,9 +209,16 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                 if (selectedMember != null && selectedMember!.isNotEmpty) {
                   body['assignedTo'] = selectedMember!;
                 }
-                if (selectedDate != null) body['dueDate'] = selectedDate!.toIso8601String();
+
+                // FIX DATE HERE (VARIANTA 1)
+                if (selectedDate != null) {
+                  body['dueDate'] =
+                      "${selectedDate!.year}-${selectedDate!.month.toString().padLeft(2, '0')}-${selectedDate!.day.toString().padLeft(2, '0')}";
+                }
+
                 if (selectedTime != null) {
-                  body['dueTime'] = '${selectedTime!.hour}:${selectedTime!.minute.toString().padLeft(2, '0')}';
+                  body['dueTime'] =
+                      '${selectedTime!.hour}:${selectedTime!.minute.toString().padLeft(2, '0')}';
                 }
 
                 try {
@@ -232,7 +239,7 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                   print('Error creating task: $e');
                 }
               },
-              child: const Text('Creează'),
+              child: const Text('Create'),
             ),
           ],
         ),
@@ -247,14 +254,14 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
-        title: Text(widget.householdName ?? 'Task-uri Grup'),
+        title: Text(widget.householdName ?? 'Group Tasks'),
         backgroundColor: paleRoyalBlue,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
       body: Column(
         children: [
-          // Filtre
+          // Filters
           Container(
             color: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 8),
@@ -270,7 +277,7 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                   },
                 ),
                 _FilterChip(
-                  label: 'Finalizate',
+                  label: 'Completed',
                   selected: _currentFilter == 'completed',
                   onTap: () {
                     setState(() => _currentFilter = 'completed');
@@ -278,7 +285,7 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                   },
                 ),
                 _FilterChip(
-                  label: 'Toate',
+                  label: 'All',
                   selected: _currentFilter == 'all',
                   onTap: () {
                     setState(() => _currentFilter = 'all');
@@ -289,7 +296,7 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
             ),
           ),
 
-          // Lista task-uri
+          // Task List
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -300,7 +307,7 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                           children: const [
                             Icon(Icons.task_alt, size: 64, color: Colors.grey),
                             SizedBox(height: 16),
-                            Text('Niciun task încă', style: TextStyle(color: Colors.grey)),
+                            Text('No tasks yet', style: TextStyle(color: Colors.grey)),
                           ],
                         ),
                       )
@@ -310,7 +317,7 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                         itemBuilder: (ctx, i) {
                           final task = _tasks[i];
                           final isCompleted = task['status'] == 'completed';
-                          final assignedName = task['assignedTo']?['name'] ?? 'Neasignat';
+                          final assignedName = task['assignedTo']?['name'] ?? 'Unassigned';
 
                           return Card(
                             margin: const EdgeInsets.only(bottom: 12),
@@ -336,16 +343,17 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                                   const SizedBox(height: 4),
                                   Row(
                                     children: [
-                                      Icon(Icons.person, size: 14, color: Colors.grey),
+                                      const Icon(Icons.person, size: 14, color: Colors.grey),
                                       const SizedBox(width: 4),
-                                      Text(assignedName, style: TextStyle(fontSize: 12)),
+                                      Text(assignedName, style: const TextStyle(fontSize: 12)),
                                       const SizedBox(width: 12),
                                       if (task['dueDate'] != null) ...[
-                                        Icon(Icons.calendar_today, size: 14, color: Colors.grey),
+                                        const Icon(Icons.calendar_today,
+                                            size: 14, color: Colors.grey),
                                         const SizedBox(width: 4),
                                         Text(
                                           _formatDate(task['dueDate']),
-                                          style: TextStyle(fontSize: 12),
+                                          style: const TextStyle(fontSize: 12),
                                         ),
                                       ],
                                     ],
