@@ -6,8 +6,16 @@ const { Types } = require('mongoose');
 // CREATE - Crează task nou (grup sau personal)
 exports.create = async (req, res) => {
   try {
-    const userIdStr = req.user?.sub || req.user?.id || req.user;
+    console.log('=== CREATE TASK DEBUG ===');
+    console.log('Headers:', req.headers);
+    console.log('Body:', req.body);
+    console.log('req.user:', req.user);
+    
+    const userIdStr = req.headers['x-user'] || req.user?.sub || req.user?.id || req.user;
+    console.log('Extracted userIdStr:', userIdStr);
+    
     if (!userIdStr) {
+      console.log('ERROR: No user ID found');
       return res.status(401).json({ error: 'User ID is required' });
     }
     

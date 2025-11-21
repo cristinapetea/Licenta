@@ -1,10 +1,9 @@
 // server/routers/task.router.js
 const router = require('express').Router();
-const ctrl = require('../controller/task.controller.js');
+const { Types } = require('mongoose');
+const ctrl = require('../controller/task.controller');
 
-
-
-// middleware demo: citește userId din header 'x-user' și îl validează
+// middleware identic cu household.router.js
 const fakeAuth = (req, res, next) => {
   console.log('fakeAuth middleware - checking x-user header');
   const id = req.headers['x-user'];
@@ -18,24 +17,20 @@ const fakeAuth = (req, res, next) => {
   next();
 };
 
-
-// Toate rutele necesită autentificare
-router.use(fakeAuth);
-
 // POST /api/tasks - crează task nou
-router.post('/', ctrl.create);
+router.post('/', fakeAuth, ctrl.create);
 
 // GET /api/tasks?type=group&householdId=xxx&status=active
 // GET /api/tasks?type=personal&status=all&category=Sport
-router.get('/', ctrl.list);
+router.get('/', fakeAuth, ctrl.list);
 
 // GET /api/tasks/stats?householdId=xxx
-router.get('/stats', ctrl.stats);
+router.get('/stats', fakeAuth, ctrl.stats);
 
 // PATCH /api/tasks/:id - update task
-router.patch('/:id', ctrl.update);
+router.patch('/:id', fakeAuth, ctrl.update);
 
 // DELETE /api/tasks/:id - delete task
-router.delete('/:id', ctrl.delete);
+router.delete('/:id', fakeAuth, ctrl.delete);
 
 module.exports = router;
