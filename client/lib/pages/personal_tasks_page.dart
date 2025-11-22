@@ -205,11 +205,15 @@ class _PersonalTasksPageState extends State<PersonalTasksPage> {
                   'category': selectedCategory ?? 'Altele',
                 };
 
+               // FIX DATE HERE (VARIANTA 1)
                 if (selectedDate != null) {
-                  body['dueDate'] = selectedDate!.toIso8601String();
+                  body['dueDate'] =
+                      "${selectedDate!.year}-${selectedDate!.month.toString().padLeft(2, '0')}-${selectedDate!.day.toString().padLeft(2, '0')}";
                 }
+
                 if (selectedTime != null) {
-                  body['dueTime'] = '${selectedTime!.hour}:${selectedTime!.minute.toString().padLeft(2, '0')}';
+                  body['dueTime'] =
+                      '${selectedTime!.hour}:${selectedTime!.minute.toString().padLeft(2, '0')}';
                 }
 
                 try {
