@@ -35,7 +35,9 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => _loading = true);
 
     // Ai Api.base = http://10.0.3.2:3000/api => nu mai pune încă un /api
-    final uri = Uri.parse('${Api.base}${Api.auth}/login');
+    //final uri = Uri.parse('${Api.base}${Api.auth}/login');
+
+    final uri = Uri.parse('${Api.base}/api/auth/login');
 
     final body = jsonEncode({
       'email': _email.text.trim(),
