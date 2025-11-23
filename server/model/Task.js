@@ -21,6 +21,8 @@ const taskSchema = new Schema({
   dueDate: { type: Date },
   dueTime: { type: String }, // format HH:mm
   points: { type: Number, default: 0 },
+  photo: { type: String },
+
   
   // Metadata
   completedAt: { type: Date },

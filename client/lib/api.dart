@@ -19,7 +19,7 @@ class Api {
   // DOAR host + port aici (fără /api)
   static String get base {
     if (kIsWeb) return 'http://localhost:3000';
-    if (Platform.isAndroid) return 'http://192.168.150.159:3000'; // ← Laptop-ul tău
-    return 'http://192.168.150.159:3000'; // ← iOS folosește același IP
+    if (Platform.isAndroid) return 'http://192.168.1.135:3000'; // ← Laptop-ul tău
+    return 'http://192.168.1.135:3000'; // ← iOS folosește același IP
   }
 }

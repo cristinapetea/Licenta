@@ -1,7 +1,9 @@
 // client/lib/pages/group_tasks_page.dart
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 import '../api.dart';
 
 class GroupTasksPage extends StatefulWidget {
@@ -95,6 +97,95 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
     }
   }
 
+  Future<void> _completeWithPhoto(String taskId) async {
+    final ImagePicker picker = ImagePicker();
+    
+    // Afișează dialog pentru a alege sursa
+    final source = await showDialog<ImageSource>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Add Photo Proof'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Take Photo'),
+              onTap: () => Navigator.pop(ctx, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Choose from Gallery'),
+              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (source == null) return;
+
+    try {
+      final XFile? photo = await picker.pickImage(
+        source: source,
+        maxWidth: 1920,
+        maxHeight: 1080,
+        imageQuality: 85,
+      );
+
+      if (photo == null) return;
+
+      // Afișează loading
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+
+      // Upload photo
+      final uri = Uri.parse('${Api.base}/api/tasks/$taskId/photo');
+      final request = http.MultipartRequest('PATCH', uri);
+      request.headers['x-user'] = widget.userId;
+      request.fields['status'] = 'completed';
+      request.files.add(await http.MultipartFile.fromPath('photo', photo.path));
+
+      final streamedResponse = await request.send().timeout(const Duration(seconds: 30));
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (!mounted) return;
+      Navigator.pop(context); // Close loading dialog
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Task completed with photo proof!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        _loadTasks();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to upload photo: ${response.statusCode}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context); // Close loading if open
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   void _showCreateTaskDialog() {
     final titleCtrl = TextEditingController();
     final descCtrl = TextEditingController();
@@ -107,25 +198,25 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          title: const Text('New Group Task'),
+          title: const Text('Task nou de grup'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
                   controller: titleCtrl,
-                  decoration: const InputDecoration(labelText: 'Title *'),
+                  decoration: const InputDecoration(labelText: 'Titlu *'),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: descCtrl,
-                  decoration: const InputDecoration(labelText: 'Description'),
+                  decoration: const InputDecoration(labelText: 'Descriere'),
                   maxLines: 2,
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   value: selectedMember,
-                  decoration: const InputDecoration(labelText: 'Assigned to'),
+                  decoration: const InputDecoration(labelText: 'Asignat către'),
                   items: _members.map<DropdownMenuItem<String>>((m) {
                     return DropdownMenuItem(
                       value: m['id'].toString(),
@@ -138,7 +229,7 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                 Row(
                   children: [
                     Expanded(
-                      child: TextButton.icon(
+                      child:                       TextButton.icon(
                         onPressed: () async {
                           final date = await showDatePicker(
                             context: dialogContext,
@@ -154,13 +245,13 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                         label: Text(
                           selectedDate != null
                               ? '${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}'
-                              : 'Choose Date',
+                              : 'Alege data',
                         ),
                       ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: TextButton.icon(
+                      child:                       TextButton.icon(
                         onPressed: () async {
                           final time = await showTimePicker(
                             context: dialogContext,
@@ -174,7 +265,7 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                         label: Text(
                           selectedTime != null
                               ? '${selectedTime!.hour}:${selectedTime!.minute.toString().padLeft(2, '0')}'
-                              : 'Choose Time',
+                              : 'Alege ora',
                         ),
                       ),
                     ),
@@ -183,7 +274,7 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                 const SizedBox(height: 12),
                 TextField(
                   controller: pointsCtrl,
-                  decoration: const InputDecoration(labelText: 'Points'),
+                  decoration: const InputDecoration(labelText: 'Puncte'),
                   keyboardType: TextInputType.number,
                 ),
               ],
@@ -192,7 +283,7 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel'),
+              child: const Text('Anulează'),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -209,16 +300,9 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                 if (selectedMember != null && selectedMember!.isNotEmpty) {
                   body['assignedTo'] = selectedMember!;
                 }
-
-                // FIX DATE HERE (VARIANTA 1)
-                if (selectedDate != null) {
-                  body['dueDate'] =
-                      "${selectedDate!.year}-${selectedDate!.month.toString().padLeft(2, '0')}-${selectedDate!.day.toString().padLeft(2, '0')}";
-                }
-
+                if (selectedDate != null) body['dueDate'] = selectedDate!.toIso8601String();
                 if (selectedTime != null) {
-                  body['dueTime'] =
-                      '${selectedTime!.hour}:${selectedTime!.minute.toString().padLeft(2, '0')}';
+                  body['dueTime'] = '${selectedTime!.hour}:${selectedTime!.minute.toString().padLeft(2, '0')}';
                 }
 
                 try {
@@ -239,7 +323,7 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                   print('Error creating task: $e');
                 }
               },
-              child: const Text('Create'),
+              child: const Text('Creează'),
             ),
           ],
         ),
@@ -254,14 +338,14 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
-        title: Text(widget.householdName ?? 'Group Tasks'),
+        title: Text(widget.householdName ?? 'Task-uri Grup'),
         backgroundColor: paleRoyalBlue,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
       body: Column(
         children: [
-          // Filters
+          // Filtre
           Container(
             color: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 8),
@@ -277,7 +361,7 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                   },
                 ),
                 _FilterChip(
-                  label: 'Completed',
+                  label: 'Finalizate',
                   selected: _currentFilter == 'completed',
                   onTap: () {
                     setState(() => _currentFilter = 'completed');
@@ -285,7 +369,7 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                   },
                 ),
                 _FilterChip(
-                  label: 'All',
+                  label: 'Toate',
                   selected: _currentFilter == 'all',
                   onTap: () {
                     setState(() => _currentFilter = 'all');
@@ -296,7 +380,7 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
             ),
           ),
 
-          // Task List
+          // Lista task-uri
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -307,7 +391,7 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                           children: const [
                             Icon(Icons.task_alt, size: 64, color: Colors.grey),
                             SizedBox(height: 16),
-                            Text('No tasks yet', style: TextStyle(color: Colors.grey)),
+                            Text('Niciun task încă', style: TextStyle(color: Colors.grey)),
                           ],
                         ),
                       )
@@ -317,57 +401,105 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                         itemBuilder: (ctx, i) {
                           final task = _tasks[i];
                           final isCompleted = task['status'] == 'completed';
-                          final assignedName = task['assignedTo']?['name'] ?? 'Unassigned';
+                          final assignedName = task['assignedTo']?['name'] ?? 'Neasignat';
 
                           return Card(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            child: ListTile(
-                              leading: Checkbox(
-                                value: isCompleted,
-                                onChanged: (_) => _toggleComplete(task['_id'], isCompleted),
-                                activeColor: paleRoyalBlue,
-                              ),
-                              title: Text(
-                                task['title'] ?? '',
-                                style: TextStyle(
-                                  decoration: isCompleted ? TextDecoration.lineThrough : null,
-                                  fontWeight: FontWeight.w600,
+                              margin: const EdgeInsets.only(bottom: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              child: Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // Checkbox
+                                    Checkbox(
+                                      value: isCompleted,
+                                      onChanged: (_) => _toggleComplete(task['_id'], isCompleted),
+                                      activeColor: paleRoyalBlue,
+                                    ),
+
+                                    const SizedBox(width: 8),
+
+                                    // TITLU + SUBTITLE + POZA
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          // Titlu + buton camera + puncte
+                                          Row(
+                                            crossAxisAlignment: CrossAxisAlignment.center,
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  task['title'] ?? '',
+                                                  style: TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.w600,
+                                                    decoration: isCompleted ? TextDecoration.lineThrough : null,
+                                                  ),
+                                                ),
+                                              ),
+
+                                              if (!isCompleted)
+                                                IconButton(
+                                                  icon: const Icon(Icons.camera_alt, color: Colors.blue),
+                                                  onPressed: () => _completeWithPhoto(task['_id']),
+                                                ),
+
+                                              if (task['points'] != null)
+                                                Chip(
+                                                  label: Text('${task['points']}p'),
+                                                  backgroundColor: paleRoyalBlue.withOpacity(0.2),
+                                                ),
+                                            ],
+                                          ),
+
+                                          if (task['description']?.isNotEmpty == true)
+                                            Padding(
+                                              padding: const EdgeInsets.only(top: 4),
+                                              child: Text(task['description']),
+                                            ),
+
+                                          const SizedBox(height: 4),
+
+                                          Row(
+                                            children: [
+                                              const Icon(Icons.person, size: 14, color: Colors.grey),
+                                              const SizedBox(width: 4),
+                                              Text(assignedName, style: const TextStyle(fontSize: 12)),
+                                              const SizedBox(width: 12),
+
+                                              if (task['dueDate'] != null) ...[
+                                                const Icon(Icons.calendar_today, size: 14, color: Colors.grey),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  _formatDate(task['dueDate']),
+                                                  style: const TextStyle(fontSize: 12),
+                                                ),
+                                              ],
+                                            ],
+                                          ),
+
+                                          if (task['photo'] != null) ...[
+                                            const SizedBox(height: 8),
+                                            ClipRRect(
+                                              borderRadius: BorderRadius.circular(8),
+                                              child: Image.network(
+                                                '${Api.base}${task['photo']}',
+                                                height: 150,
+                                                width: double.infinity,
+                                                fit: BoxFit.cover,
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  if (task['description']?.isNotEmpty == true)
-                                    Text(task['description']),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.person, size: 14, color: Colors.grey),
-                                      const SizedBox(width: 4),
-                                      Text(assignedName, style: const TextStyle(fontSize: 12)),
-                                      const SizedBox(width: 12),
-                                      if (task['dueDate'] != null) ...[
-                                        const Icon(Icons.calendar_today,
-                                            size: 14, color: Colors.grey),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          _formatDate(task['dueDate']),
-                                          style: const TextStyle(fontSize: 12),
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                ],
-                              ),
-                              trailing: task['points'] != null
-                                  ? Chip(
-                                      label: Text('${task['points']}p'),
-                                      backgroundColor: paleRoyalBlue.withOpacity(0.2),
-                                    )
-                                  : null,
-                            ),
-                          );
+                            );
+
                         },
                       ),
           ),

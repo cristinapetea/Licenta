@@ -2,6 +2,7 @@
 const router = require('express').Router();
 const { Types } = require('mongoose');
 const ctrl = require('../controller/task.controller');
+const upload = require('../config/upload'); // ✅ import multer
 
 // middleware identic cu household.router.js
 const fakeAuth = (req, res, next) => {
@@ -21,14 +22,18 @@ const fakeAuth = (req, res, next) => {
 router.post('/', fakeAuth, ctrl.create);
 
 // GET /api/tasks?type=group&householdId=xxx&status=active
-// GET /api/tasks?type=personal&status=all&category=Sport
 router.get('/', fakeAuth, ctrl.list);
 
 // GET /api/tasks/stats?householdId=xxx
 router.get('/stats', fakeAuth, ctrl.stats);
 
+// PATCH /api/tasks/:id/photo - upload photo + complete task ✅ NOU
+router.patch('/:id/photo', fakeAuth, upload.single('photo'), ctrl.updateWithPhoto);
+
+
 // PATCH /api/tasks/:id - update task
 router.patch('/:id', fakeAuth, ctrl.update);
+
 
 // DELETE /api/tasks/:id - delete task
 router.delete('/:id', fakeAuth, ctrl.delete);
