@@ -2,7 +2,7 @@
 const router = require('express').Router();
 const { Types } = require('mongoose');
 const ctrl = require('../controller/task.controller');
-const upload = require('../config/upload'); // ✅ import multer
+const upload = require('../config/upload');
 
 // middleware identic cu household.router.js
 const fakeAuth = (req, res, next) => {
@@ -18,7 +18,7 @@ const fakeAuth = (req, res, next) => {
   next();
 };
 
-// POST /api/tasks - crează task nou
+// POST /api/tasks - creează task nou
 router.post('/', fakeAuth, ctrl.create);
 
 // GET /api/tasks?type=group&householdId=xxx&status=active
@@ -27,15 +27,21 @@ router.get('/', fakeAuth, ctrl.list);
 // GET /api/tasks/stats?householdId=xxx
 router.get('/stats', fakeAuth, ctrl.stats);
 
-// PATCH /api/tasks/:id/photo - upload photo + complete task ✅ NOU
-router.patch('/:id/photo', fakeAuth, upload.single('photo'), ctrl.updateWithPhoto);
+// ✅ GET /api/tasks/:id - get single task (TREBUIE SĂ FIE ÎNAINTE DE PATCH)
+router.get('/:id', fakeAuth, ctrl.getById);
 
+// PATCH /api/tasks/:id/photo - upload photo + complete task
+router.patch('/:id/photo', fakeAuth, upload.single('photo'), ctrl.updateWithPhoto);
 
 // PATCH /api/tasks/:id - update task
 router.patch('/:id', fakeAuth, ctrl.update);
 
-
 // DELETE /api/tasks/:id - delete task
 router.delete('/:id', fakeAuth, ctrl.delete);
+
+// Shopping List endpoints
+router.post('/:id/shopping', fakeAuth, ctrl.addShoppingItem);
+router.patch('/:id/shopping/:itemId/toggle', fakeAuth, ctrl.toggleShoppingItem);
+router.delete('/:id/shopping/:itemId', fakeAuth, ctrl.deleteShoppingItem);
 
 module.exports = router;

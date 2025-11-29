@@ -184,7 +184,7 @@ exports.update = async (req, res) => {
   }
 };
 
-
+// UPDATE WITH PHOTO - Upload photo & complete task
 exports.updateWithPhoto = async (req, res) => {
   try {
     const userIdStr = req.user?.sub || req.user?.id || req.user;
@@ -195,34 +195,20 @@ exports.updateWithPhoto = async (req, res) => {
     const userId = new Types.ObjectId(userIdStr);
     const { id } = req.params;
 
-    let task = await Task.findById(id);
+    const task = await Task.findById(id);
     if (!task) {
       return res.status(404).json({ error: 'Task not found' });
     }
 
-    // doar owner-ul sau membrii household-ului pot modifica
-    if (task.type === 'personal' && String(task.owner) !== String(userId)) {
-      return res.status(403).json({ error: 'Not authorized' });
+    if (!req.file) {
+      return res.status(400).json({ error: 'Photo file is required' });
     }
 
-    if (task.type === 'group') {
-      const hh = await Household.findById(task.household);
-      if (!hh.members.some(m => String(m) === String(userId))) {
-        return res.status(403).json({ error: 'Not authorized' });
-      }
-    }
-
-    // dacă vine fișier => îl salvăm
-    if (req.file) {
-      task.photo = `/uploads/${req.file.filename}`;
-    }
-
-    // dacă status=completed → marcăm data + cine l-a completat
-    if (req.body.status === 'completed') {
-      task.status = 'completed';
-      task.completedAt = new Date();
-      task.completedBy = userId;
-    }
+    // Save photo + mark as completed
+    task.photo = req.file.filename;
+    task.status = 'completed';
+    task.completedAt = new Date();
+    task.completedBy = userId;
 
     await task.save();
 
@@ -233,11 +219,10 @@ exports.updateWithPhoto = async (req, res) => {
 
     return res.json(populated);
   } catch (e) {
-    console.error('update with photo error:', e);
+    console.error('updateWithPhoto error:', e);
     return res.status(500).json({ error: 'Server error' });
   }
 };
-
 
 // DELETE - Șterge task
 exports.delete = async (req, res) => {
@@ -325,5 +310,105 @@ exports.stats = async (req, res) => {
   } catch (e) {
     console.error('stats error:', e.message || e);
     return res.status(500).json({ error: e.message || 'Server error' });
+  }
+};
+
+// Shopping List Operations
+exports.addShoppingItem = async (req, res) => {
+  try {
+    const userIdStr = req.user?.sub || req.user?.id || req.user;
+    if (!userIdStr) {
+      return res.status(401).json({ error: 'User ID is required' });
+    }
+    
+    const { id } = req.params;
+    const { item } = req.body;
+    
+    if (!item) {
+      return res.status(400).json({ error: 'Item is required' });
+    }
+    
+    const task = await Task.findById(id);
+    if (!task) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+    
+    task.shoppingList.push({ item, checked: false });
+    await task.save();
+    
+    return res.json(task);
+  } catch (e) {
+    console.error('add shopping item error:', e);
+    return res.status(500).json({ error: 'Server error' });
+  }
+};
+
+exports.toggleShoppingItem = async (req, res) => {
+  try {
+    const { id, itemId } = req.params;
+    
+    const task = await Task.findById(id);
+    if (!task) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+    
+    const item = task.shoppingList.id(itemId);
+    if (!item) {
+      return res.status(404).json({ error: 'Item not found' });
+    }
+    
+    item.checked = !item.checked;
+    await task.save();
+    
+    return res.json(task);
+  } catch (e) {
+    console.error('toggle shopping item error:', e);
+    return res.status(500).json({ error: 'Server error' });
+  }
+};
+
+exports.deleteShoppingItem = async (req, res) => {
+  try {
+    const { id, itemId } = req.params;
+    
+    const task = await Task.findById(id);
+    if (!task) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+    
+    task.shoppingList.pull(itemId);
+    await task.save();
+    
+    return res.json(task);
+  } catch (e) {
+    console.error('delete shopping item error:', e);
+    return res.status(500).json({ error: 'Server error' });
+  }
+};
+
+// Adaugă această funcție în task.controller.js (la sfârșit, după exports.deleteShoppingItem)
+
+// GET single task by ID
+exports.getById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    console.log('Getting task by ID:', id);
+    
+    const task = await Task.findById(id)
+      .populate('assignedTo', 'name email')
+      .populate('owner', 'name email')
+      .populate('completedBy', 'name email');
+    
+    if (!task) {
+      console.log('Task not found');
+      return res.status(404).json({ error: 'Task not found' });
+    }
+    
+    console.log('Task found, shoppingList items:', task.shoppingList.length);
+    return res.json(task);
+  } catch (e) {
+    console.error('get task by id error:', e);
+    return res.status(500).json({ error: 'Server error' });
   }
 };

@@ -21,12 +21,18 @@ const taskSchema = new Schema({
   dueDate: { type: Date },
   dueTime: { type: String }, // format HH:mm
   points: { type: Number, default: 0 },
-  photo: { type: String },
-
+  
+  // Shopping list (pentru task-uri de groceries)
+  shoppingList: [{
+    item: { type: String, required: true },
+    checked: { type: Boolean, default: false },
+    addedAt: { type: Date, default: Date.now }
+  }],
   
   // Metadata
   completedAt: { type: Date },
   completedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+  photo: { type: String }, // ✅ NOU - path către poza de proof
 }, { timestamps: true });
 
 // Index pentru queries rapide

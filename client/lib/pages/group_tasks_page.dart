@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import '../api.dart';
+import 'shopping_list_page.dart';
 
 class GroupTasksPage extends StatefulWidget {
   final String userId;
@@ -25,7 +26,7 @@ class GroupTasksPage extends StatefulWidget {
 class _GroupTasksPageState extends State<GroupTasksPage> {
   List<dynamic> _tasks = [];
   List<dynamic> _members = [];
-  String _currentFilter = 'active'; // active, completed, all
+  String _currentFilter = 'active';
   bool _isLoading = true;
 
   @override
@@ -100,7 +101,6 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
   Future<void> _completeWithPhoto(String taskId) async {
     final ImagePicker picker = ImagePicker();
     
-    // Afișează dialog pentru a alege sursa
     final source = await showDialog<ImageSource>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -135,7 +135,6 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
 
       if (photo == null) return;
 
-      // Afișează loading
       if (!mounted) return;
       showDialog(
         context: context,
@@ -145,7 +144,6 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
         ),
       );
 
-      // Upload photo
       final uri = Uri.parse('${Api.base}/api/tasks/$taskId/photo');
       final request = http.MultipartRequest('PATCH', uri);
       request.headers['x-user'] = widget.userId;
@@ -156,7 +154,7 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
       final response = await http.Response.fromStream(streamedResponse);
 
       if (!mounted) return;
-      Navigator.pop(context); // Close loading dialog
+      Navigator.pop(context);
 
       if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -176,7 +174,7 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
       }
     } catch (e) {
       if (!mounted) return;
-      Navigator.pop(context); // Close loading if open
+      Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: $e'),
@@ -229,7 +227,7 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                 Row(
                   children: [
                     Expanded(
-                      child:                       TextButton.icon(
+                      child: TextButton.icon(
                         onPressed: () async {
                           final date = await showDatePicker(
                             context: dialogContext,
@@ -251,7 +249,7 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                     ),
                     const SizedBox(width: 8),
                     Expanded(
-                      child:                       TextButton.icon(
+                      child: TextButton.icon(
                         onPressed: () async {
                           final time = await showTimePicker(
                             context: dialogContext,
@@ -331,6 +329,80 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
     );
   }
 
+  Future<void> _openShoppingList() async {
+    // Caută un task de shopping existent
+    String? shoppingTaskId;
+    String? shoppingTaskTitle;
+    
+    for (var task in _tasks) {
+      if (task['title']?.toLowerCase().contains('shopping') == true ||
+          task['title']?.toLowerCase().contains('cumpărături') == true ||
+          task['title']?.toLowerCase().contains('cumparaturi') == true) {
+        shoppingTaskId = task['_id'];
+        shoppingTaskTitle = task['title'];
+        break;
+      }
+    }
+    
+    // Dacă nu există, creează unul
+    if (shoppingTaskId == null) {
+      try {
+        final uri = Uri.parse('${Api.base}/api/tasks');
+        final resp = await http.post(
+          uri,
+          headers: {'Content-Type': 'application/json', 'x-user': widget.userId},
+          body: jsonEncode({
+            'title': 'Lista de cumpărături',
+            'description': 'Task pentru shopping list',
+            'type': 'group',
+            'householdId': widget.householdId,
+            'points': 0,
+          }),
+        ).timeout(const Duration(seconds: 10));
+
+        if (resp.statusCode == 201) {
+          final newTask = jsonDecode(resp.body);
+          shoppingTaskId = newTask['_id'];
+          shoppingTaskTitle = newTask['title'];
+          _loadTasks(); // Reîncarcă lista
+        } else {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Nu s-a putut crea task-ul de shopping'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+      } catch (e) {
+        print('Error creating shopping task: $e');
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Eroare: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+    }
+    
+    // Navighează la shopping list
+    if (shoppingTaskId != null && mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ShoppingListPage(
+            userId: widget.userId,
+            taskId: shoppingTaskId!,
+            taskTitle: shoppingTaskTitle ?? 'Lista de cumpărături',
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     const paleRoyalBlue = Color(0xFF7E9BFF);
@@ -342,6 +414,14 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
         backgroundColor: paleRoyalBlue,
         foregroundColor: Colors.white,
         elevation: 0,
+        actions: [
+          // ✅ BUTONUL DE SHOPPING CART
+          IconButton(
+            icon: const Icon(Icons.shopping_cart),
+            onPressed: _openShoppingList,
+            tooltip: 'Lista de cumpărături',
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -404,102 +484,82 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                           final assignedName = task['assignedTo']?['name'] ?? 'Neasignat';
 
                           return Card(
-                              margin: const EdgeInsets.only(bottom: 12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              child: Padding(
-                                padding: const EdgeInsets.all(12),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    // Checkbox
-                                    Checkbox(
-                                      value: isCompleted,
-                                      onChanged: (_) => _toggleComplete(task['_id'], isCompleted),
-                                      activeColor: paleRoyalBlue,
-                                    ),
-
-                                    const SizedBox(width: 8),
-
-                                    // TITLU + SUBTITLE + POZA
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          // Titlu + buton camera + puncte
-                                          Row(
-                                            crossAxisAlignment: CrossAxisAlignment.center,
-                                            children: [
-                                              Expanded(
-                                                child: Text(
-                                                  task['title'] ?? '',
-                                                  style: TextStyle(
-                                                    fontSize: 16,
-                                                    fontWeight: FontWeight.w600,
-                                                    decoration: isCompleted ? TextDecoration.lineThrough : null,
-                                                  ),
-                                                ),
-                                              ),
-
-                                              if (!isCompleted)
-                                                IconButton(
-                                                  icon: const Icon(Icons.camera_alt, color: Colors.blue),
-                                                  onPressed: () => _completeWithPhoto(task['_id']),
-                                                ),
-
-                                              if (task['points'] != null)
-                                                Chip(
-                                                  label: Text('${task['points']}p'),
-                                                  backgroundColor: paleRoyalBlue.withOpacity(0.2),
-                                                ),
-                                            ],
+                            margin: const EdgeInsets.only(bottom: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            child: ListTile(
+                              leading: Checkbox(
+                                value: isCompleted,
+                                onChanged: (_) => _toggleComplete(task['_id'], isCompleted),
+                                activeColor: paleRoyalBlue,
+                              ),
+                              title: Text(
+                                task['title'] ?? '',
+                                style: TextStyle(
+                                  decoration: isCompleted ? TextDecoration.lineThrough : null,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (task['description']?.isNotEmpty == true)
+                                    Text(task['description']),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      Icon(Icons.person, size: 14, color: Colors.grey),
+                                      const SizedBox(width: 4),
+                                      Text(assignedName, style: TextStyle(fontSize: 12)),
+                                      const SizedBox(width: 12),
+                                      if (task['dueDate'] != null) ...[
+                                        Icon(Icons.calendar_today, size: 14, color: Colors.grey),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          _formatDate(task['dueDate']),
+                                          style: TextStyle(fontSize: 12),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                  if (task['photo'] != null) ...[
+                                    const SizedBox(height: 8),
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Image.network(
+                                        '${Api.base}${task['photo']}',
+                                        height: 150,
+                                        width: double.infinity,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, __, ___) => Container(
+                                          height: 150,
+                                          color: Colors.grey[300],
+                                          child: const Center(
+                                            child: Icon(Icons.broken_image),
                                           ),
-
-                                          if (task['description']?.isNotEmpty == true)
-                                            Padding(
-                                              padding: const EdgeInsets.only(top: 4),
-                                              child: Text(task['description']),
-                                            ),
-
-                                          const SizedBox(height: 4),
-
-                                          Row(
-                                            children: [
-                                              const Icon(Icons.person, size: 14, color: Colors.grey),
-                                              const SizedBox(width: 4),
-                                              Text(assignedName, style: const TextStyle(fontSize: 12)),
-                                              const SizedBox(width: 12),
-
-                                              if (task['dueDate'] != null) ...[
-                                                const Icon(Icons.calendar_today, size: 14, color: Colors.grey),
-                                                const SizedBox(width: 4),
-                                                Text(
-                                                  _formatDate(task['dueDate']),
-                                                  style: const TextStyle(fontSize: 12),
-                                                ),
-                                              ],
-                                            ],
-                                          ),
-
-                                          if (task['photo'] != null) ...[
-                                            const SizedBox(height: 8),
-                                            ClipRRect(
-                                              borderRadius: BorderRadius.circular(8),
-                                              child: Image.network(
-                                                '${Api.base}${task['photo']}',
-                                                height: 150,
-                                                width: double.infinity,
-                                                fit: BoxFit.cover,
-                                              ),
-                                            ),
-                                          ],
-                                        ],
+                                        ),
                                       ),
                                     ),
                                   ],
-                                ),
+                                ],
                               ),
-                            );
-
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (!isCompleted)
+                                    IconButton(
+                                      icon: const Icon(Icons.camera_alt, color: Colors.blue),
+                                      onPressed: () => _completeWithPhoto(task['_id']),
+                                      tooltip: 'Complete with photo',
+                                    ),
+                                  if (task['points'] != null)
+                                    Chip(
+                                      label: Text('${task['points']}p'),
+                                      backgroundColor: paleRoyalBlue.withOpacity(0.2),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          );
                         },
                       ),
           ),
