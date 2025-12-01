@@ -71,7 +71,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Eroare la încărcare: ${resp.statusCode}'),
+              content: Text('Failed to load: ${resp.statusCode}'),
               backgroundColor: Colors.red,
             ),
           );
@@ -83,7 +83,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Eroare: $e'),
+            content: Text('Error: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -115,7 +115,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('✅ "$itemName" adăugat'),
+              content: Text('✅ "$itemName" added to shopping list'),
               backgroundColor: Colors.green,
               duration: const Duration(seconds: 1),
             ),
@@ -126,7 +126,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Eroare la adăugare: ${resp.statusCode}'),
+              content: Text('Error adding item: ${resp.statusCode}'),
               backgroundColor: Colors.red,
             ),
           );
@@ -137,7 +137,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Eroare: $e'),
+            content: Text('Error: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -203,19 +203,19 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
             _itemController.text = result.recognizedWords;
           });
           
-          // Când utilizatorul termină de vorbit
+          // When the user finishes speaking
           if (result.finalResult) {
             _addItem(_itemController.text);
             _stopListening();
           }
         },
-        localeId: 'ro_RO', // Română
+        localeId: 'ro_RO', // Romanian
       );
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Microfonul nu este disponibil'),
+            content: Text('Microphone not available'),
             backgroundColor: Colors.red,
           ),
         );
@@ -242,7 +242,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
       ),
       body: Column(
         children: [
-          // Input pentru adăugare produse
+          // Input for adding items
           Container(
             color: Colors.white,
             padding: const EdgeInsets.all(16),
@@ -252,7 +252,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                   child: TextField(
                     controller: _itemController,
                     decoration: InputDecoration(
-                      hintText: 'Adaugă produs...',
+                      hintText: 'Add item...',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -265,7 +265,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                // Buton microfon
+                // Microphone button
                 IconButton(
                   icon: Icon(
                     _isListening ? Icons.mic : Icons.mic_none,
@@ -273,20 +273,20 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                   ),
                   iconSize: 32,
                   onPressed: _isListening ? _stopListening : _startListening,
-                  tooltip: _isListening ? 'Oprește' : 'Dictează',
+                  tooltip: _isListening ? 'Stop' : 'Speak',
                 ),
-                // Buton adaugă
+                // Add button
                 IconButton(
                   icon: const Icon(Icons.add_circle, color: paleRoyalBlue),
                   iconSize: 32,
                   onPressed: () => _addItem(_itemController.text),
-                  tooltip: 'Adaugă',
+                  tooltip: 'Add',
                 ),
               ],
             ),
           ),
 
-          // Lista de produse
+          // Items list
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -298,12 +298,12 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                             Icon(Icons.shopping_basket, size: 64, color: Colors.grey),
                             SizedBox(height: 16),
                             Text(
-                              'Niciun produs încă',
+                              'No items yet',
                               style: TextStyle(color: Colors.grey, fontSize: 16),
                             ),
                             SizedBox(height: 8),
                             Text(
-                              'Apasă pe microfon pentru a dicta',
+                              'Tap the microphone to dictate',
                               style: TextStyle(color: Colors.grey, fontSize: 14),
                             ),
                           ],

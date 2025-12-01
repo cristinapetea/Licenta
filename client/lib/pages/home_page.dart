@@ -105,7 +105,7 @@ class _HomePageState extends State<HomePage> {
             householdName: _householdName,
           ),
         ),
-      ).then((_) => _loadStats()); // Refresh stats când te întorci
+      ).then((_) => _loadStats()); // Refresh stats when you return
     } else if (index == 2) {
       // Personal Tasks tab
       Navigator.push(
@@ -156,7 +156,7 @@ class _HomePageState extends State<HomePage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Bine ai venit${widget.userName != null ? ', ${widget.userName}' : ''}!',
+                        'Welcome${widget.userName != null ? ', ${widget.userName}' : ''}!',
                         style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.w700,
@@ -187,7 +187,7 @@ class _HomePageState extends State<HomePage> {
                   children: [
                     Expanded(
                       child: _KpiCard(
-                        title: 'Puncte',
+                        title: 'Points',
                         value: '${_stats['points'] ?? 0}',
                         icon: Icons.emoji_events_outlined,
                       ),
@@ -195,7 +195,7 @@ class _HomePageState extends State<HomePage> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: _KpiCard(
-                        title: 'Finalizate',
+                        title: 'Completed',
                         value: '${_stats['completed'] ?? 0}',
                         icon: Icons.check_circle_outline,
                       ),
@@ -203,7 +203,7 @@ class _HomePageState extends State<HomePage> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: _KpiCard(
-                        title: 'Astăzi',
+                        title: 'Today',
                         value: '${_stats['today'] ?? 0}',
                         icon: Icons.today_outlined,
                       ),
@@ -222,7 +222,7 @@ class _HomePageState extends State<HomePage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Acțiuni rapide',
+                        'Quick Actions',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
@@ -234,13 +234,13 @@ class _HomePageState extends State<HomePage> {
                         children: [
                           _QuickActionButton(
                             icon: Icons.group,
-                            label: 'Task-uri\nGrup',
+                            label: 'Group\nTasks',
                             color: paleRoyalBlue,
                             onTap: () => _onTabTapped(1),
                           ),
                           _QuickActionButton(
                             icon: Icons.person,
-                            label: 'Task-uri\nPersonale',
+                            label: 'Personal\nTasks',
                             color: palePurple,
                             onTap: () => _onTabTapped(2),
                           ),
@@ -266,7 +266,7 @@ class _HomePageState extends State<HomePage> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             const Text(
-                              'Progres săptămânal',
+                              'Weekly Progress',
                               style: TextStyle(fontWeight: FontWeight.w600),
                             ),
                             Text(
@@ -323,7 +323,7 @@ class _HomePageState extends State<HomePage> {
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.group_outlined),
-              label: 'Grup',
+              label: 'Group',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.person_outline),
@@ -331,7 +331,7 @@ class _HomePageState extends State<HomePage> {
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.account_circle_outlined),
-              label: 'Profil',
+              label: 'Profile',
             ),
           ],
         ),

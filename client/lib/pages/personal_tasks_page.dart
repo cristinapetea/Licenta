@@ -16,14 +16,14 @@ class PersonalTasksPage extends StatefulWidget {
 class _PersonalTasksPageState extends State<PersonalTasksPage> {
   List<dynamic> _tasks = [];
   Map<String, int> _categoryStats = {};
-  String _currentTab = 'astazi'; // astazi, saptamana, toate
+  String _currentTab = 'today'; // today, week, all
   bool _isLoading = true;
 
   final List<Map<String, dynamic>> _categories = [
     {'name': 'Sport', 'icon': Icons.fitness_center, 'color': Colors.orange},
     {'name': 'Hobby', 'icon': Icons.palette, 'color': Colors.purple},
-    {'name': 'Muncă', 'icon': Icons.work, 'color': Colors.blue},
-    {'name': 'Învățat', 'icon': Icons.school, 'color': Colors.green},
+    {'name': 'Work', 'icon': Icons.work, 'color': Colors.blue},
+    {'name': 'Study', 'icon': Icons.school, 'color': Colors.green},
   ];
 
   @override
@@ -44,10 +44,10 @@ class _PersonalTasksPageState extends State<PersonalTasksPage> {
       if (resp.statusCode == 200) {
         final allTasks = jsonDecode(resp.body) as List;
         
-        // Calculează statistici pe categorii
+        // Calculate category statistics
         final stats = <String, int>{};
         for (var task in allTasks) {
-          final cat = task['category'] ?? 'Altele';
+          final cat = task['category'] ?? 'Other';
           stats[cat] = (stats[cat] ?? 0) + 1;
         }
 
@@ -91,25 +91,25 @@ class _PersonalTasksPageState extends State<PersonalTasksPage> {
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          title: const Text('Task nou personal'),
+          title: const Text('New Personal Task'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
                   controller: titleCtrl,
-                  decoration: const InputDecoration(labelText: 'Titlu *'),
+                  decoration: const InputDecoration(labelText: 'Title *'),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: descCtrl,
-                  decoration: const InputDecoration(labelText: 'Descriere'),
+                  decoration: const InputDecoration(labelText: 'Description'),
                   maxLines: 2,
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   value: selectedCategory,
-                  decoration: const InputDecoration(labelText: 'Categorie'),
+                  decoration: const InputDecoration(labelText: 'Category'),
                   items: _categories.map((c) {
                     return DropdownMenuItem(
                       value: c['name'] as String,
@@ -148,7 +148,7 @@ class _PersonalTasksPageState extends State<PersonalTasksPage> {
                         label: Text(
                           selectedDate != null
                               ? '${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}'
-                              : 'Alege data',
+                              : 'Choose date',
                           style: TextStyle(
                             fontSize: 12,
                             color: selectedDate != null ? Colors.blue : null,
@@ -176,7 +176,7 @@ class _PersonalTasksPageState extends State<PersonalTasksPage> {
                         label: Text(
                           selectedTime != null
                               ? '${selectedTime!.hour}:${selectedTime!.minute.toString().padLeft(2, '0')}'
-                              : 'Alege ora',
+                              : 'Choose time',
                           style: TextStyle(
                             fontSize: 12,
                             color: selectedTime != null ? Colors.blue : null,
@@ -192,7 +192,7 @@ class _PersonalTasksPageState extends State<PersonalTasksPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Anulează'),
+              child: const Text('Cancel'),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -202,7 +202,7 @@ class _PersonalTasksPageState extends State<PersonalTasksPage> {
                   'title': titleCtrl.text.trim(),
                   'description': descCtrl.text.trim(),
                   'type': 'personal',
-                  'category': selectedCategory ?? 'Altele',
+                  'category': selectedCategory ?? 'Other',
                 };
 
                // FIX DATE HERE (VARIANTA 1)
@@ -234,7 +234,7 @@ class _PersonalTasksPageState extends State<PersonalTasksPage> {
                   print('Error creating task: $e');
                 }
               },
-              child: const Text('Creează'),
+              child: const Text('Create'),
             ),
           ],
         ),
@@ -248,12 +248,12 @@ class _PersonalTasksPageState extends State<PersonalTasksPage> {
     final weekEnd = today.add(const Duration(days: 7));
 
     return _tasks.where((task) {
-      if (_currentTab == 'astazi') {
+      if (_currentTab == 'today') {
         if (task['dueDate'] == null) return false;
         final dueDate = DateTime.parse(task['dueDate']);
         final dueDay = DateTime(dueDate.year, dueDate.month, dueDate.day);
         return dueDay == today;
-      } else if (_currentTab == 'saptamana') {
+      } else if (_currentTab == 'week') {
         if (task['dueDate'] == null) return false;
         final dueDate = DateTime.parse(task['dueDate']);
         final dueDay = DateTime(dueDate.year, dueDate.month, dueDate.day);
@@ -273,7 +273,7 @@ class _PersonalTasksPageState extends State<PersonalTasksPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
-        title: const Text('Task-uri Personale'),
+        title: const Text('Personal Tasks'),
         backgroundColor: paleRoyalBlue,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -290,15 +290,15 @@ class _PersonalTasksPageState extends State<PersonalTasksPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     _StatBox(
-                      label: 'Rată finalizare',
+                      label: 'Completion Rate',
                       value: '${(completionRate * 100).toInt()}%',
                     ),
                     _StatBox(
-                      label: 'Săptămâna asta',
+                      label: 'This Week',
                       value: '${_getFilteredTasks().length}',
                     ),
                     _StatBox(
-                      label: 'Astăzi',
+                      label: 'Today',
                       value: '${_tasks.where((t) {
                         if (t['dueDate'] == null) return false;
                         try {
@@ -315,7 +315,7 @@ class _PersonalTasksPageState extends State<PersonalTasksPage> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                // Categorii
+                // Categories
                 if (_categoryStats.isNotEmpty)
                   Wrap(
                     spacing: 8,
@@ -351,25 +351,25 @@ class _PersonalTasksPageState extends State<PersonalTasksPage> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 _TabButton(
-                  label: 'Astăzi',
-                  selected: _currentTab == 'astazi',
-                  onTap: () => setState(() => _currentTab = 'astazi'),
+                  label: 'Today',
+                  selected: _currentTab == 'today',
+                  onTap: () => setState(() => _currentTab = 'today'),
                 ),
                 _TabButton(
-                  label: 'Săptămâna',
-                  selected: _currentTab == 'saptamana',
-                  onTap: () => setState(() => _currentTab = 'saptamana'),
+                  label: 'Week',
+                  selected: _currentTab == 'week',
+                  onTap: () => setState(() => _currentTab = 'week'),
                 ),
                 _TabButton(
-                  label: 'Toate',
-                  selected: _currentTab == 'toate',
-                  onTap: () => setState(() => _currentTab = 'toate'),
+                  label: 'All',
+                  selected: _currentTab == 'all',
+                  onTap: () => setState(() => _currentTab = 'all'),
                 ),
               ],
             ),
           ),
 
-          // Lista task-uri
+          // Task list
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -380,7 +380,7 @@ class _PersonalTasksPageState extends State<PersonalTasksPage> {
                           children: const [
                             Icon(Icons.task_alt, size: 64, color: Colors.grey),
                             SizedBox(height: 16),
-                            Text('Niciun task încă', style: TextStyle(color: Colors.grey)),
+                            Text('No tasks yet', style: TextStyle(color: Colors.grey)),
                           ],
                         ),
                       )
@@ -390,10 +390,10 @@ class _PersonalTasksPageState extends State<PersonalTasksPage> {
                         itemBuilder: (ctx, i) {
                           final task = filteredTasks[i];
                           final isCompleted = task['status'] == 'completed';
-                          final categoryName = task['category'] ?? 'Altele';
+                          final categoryName = task['category'] ?? 'Other';
                           final category = _categories.firstWhere(
                             (c) => c['name'] == categoryName,
-                            orElse: () => {'icon': Icons.task, 'color': Colors.grey, 'name': 'Altele'},
+                            orElse: () => {'icon': Icons.task, 'color': Colors.grey, 'name': 'Other'},
                           );
 
                           return Card(
