@@ -187,6 +187,9 @@ exports.update = async (req, res) => {
 // UPDATE WITH PHOTO - Upload photo & complete task
 exports.updateWithPhoto = async (req, res) => {
   try {
+    console.log('=== UPDATE WITH PHOTO ===');
+    console.log('File received:', req.file);
+    
     const userIdStr = req.user?.sub || req.user?.id || req.user;
     if (!userIdStr) {
       return res.status(401).json({ error: 'User ID is required' });
@@ -201,25 +204,30 @@ exports.updateWithPhoto = async (req, res) => {
     }
 
     if (!req.file) {
+      console.log('❌ No file in request');
       return res.status(400).json({ error: 'Photo file is required' });
     }
 
-    // Save photo + mark as completed
-    task.photo = req.file.filename;
+    // ✅ Save photo path with /uploads/ prefix
+    task.photo = `/uploads/${req.file.filename}`;
     task.status = 'completed';
     task.completedAt = new Date();
     task.completedBy = userId;
 
     await task.save();
 
+    console.log('✅ Photo saved successfully:', task.photo);
+
     const populated = await Task.findById(task._id)
       .populate('assignedTo', 'name email')
       .populate('owner', 'name email')
       .populate('completedBy', 'name email');
 
+    console.log('Response task photo path:', populated.photo);
+
     return res.json(populated);
   } catch (e) {
-    console.error('updateWithPhoto error:', e);
+    console.error('❌ updateWithPhoto error:', e);
     return res.status(500).json({ error: 'Server error' });
   }
 };

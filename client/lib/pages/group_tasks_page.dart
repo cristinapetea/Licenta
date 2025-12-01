@@ -486,76 +486,123 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                           return Card(
                             margin: const EdgeInsets.only(bottom: 12),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            child: ListTile(
-                              leading: Checkbox(
-                                value: isCompleted,
-                                onChanged: (_) => _toggleComplete(task['_id'], isCompleted),
-                                activeColor: paleRoyalBlue,
-                              ),
-                              title: Text(
-                                task['title'] ?? '',
-                                style: TextStyle(
-                                  decoration: isCompleted ? TextDecoration.lineThrough : null,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              subtitle: Column(
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  if (task['description']?.isNotEmpty == true)
-                                    Text(task['description']),
-                                  const SizedBox(height: 4),
+                                  // Header: Checkbox + Title + Points
                                   Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Icon(Icons.person, size: 14, color: Colors.grey),
-                                      const SizedBox(width: 4),
-                                      Text(assignedName, style: TextStyle(fontSize: 12)),
-                                      const SizedBox(width: 12),
-                                      if (task['dueDate'] != null) ...[
-                                        Icon(Icons.calendar_today, size: 14, color: Colors.grey),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          _formatDate(task['dueDate']),
-                                          style: TextStyle(fontSize: 12),
+                                      Checkbox(
+                                        value: isCompleted,
+                                        onChanged: (_) => _toggleComplete(task['_id'], isCompleted),
+                                        activeColor: paleRoyalBlue,
+                                      ),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            const SizedBox(height: 12),
+                                            Text(
+                                              task['title'] ?? '',
+                                              style: TextStyle(
+                                                decoration: isCompleted ? TextDecoration.lineThrough : null,
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 16,
+                                              ),
+                                            ),
+                                            if (task['description']?.isNotEmpty == true) ...[
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                task['description'],
+                                                style: const TextStyle(fontSize: 14, color: Colors.grey),
+                                              ),
+                                            ],
+                                          ],
                                         ),
-                                      ],
+                                      ),
+                                      // Points badge
+                                      if (task['points'] != null)
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                          decoration: BoxDecoration(
+                                            color: paleRoyalBlue.withOpacity(0.2),
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: Text(
+                                            '${task['points']}p',
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
                                     ],
                                   ),
+                                  
+                                  const SizedBox(height: 8),
+                                  
+                                  // Info row: Person + Date
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 48),
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.person, size: 14, color: Colors.grey),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          assignedName,
+                                          style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                        ),
+                                        if (task['dueDate'] != null) ...[
+                                          const SizedBox(width: 12),
+                                          const Icon(Icons.calendar_today, size: 14, color: Colors.grey),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            _formatDate(task['dueDate']),
+                                            style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                  
+                                  // Photo if exists
                                   if (task['photo'] != null) ...[
-                                    const SizedBox(height: 8),
+                                    const SizedBox(height: 12),
                                     ClipRRect(
                                       borderRadius: BorderRadius.circular(8),
                                       child: Image.network(
                                         '${Api.base}${task['photo']}',
-                                        height: 150,
+                                        height: 200,
                                         width: double.infinity,
                                         fit: BoxFit.cover,
                                         errorBuilder: (_, __, ___) => Container(
-                                          height: 150,
+                                          height: 200,
                                           color: Colors.grey[300],
                                           child: const Center(
-                                            child: Icon(Icons.broken_image),
+                                            child: Icon(Icons.broken_image, size: 48),
                                           ),
                                         ),
                                       ),
                                     ),
                                   ],
-                                ],
-                              ),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  if (!isCompleted)
-                                    IconButton(
-                                      icon: const Icon(Icons.camera_alt, color: Colors.blue),
-                                      onPressed: () => _completeWithPhoto(task['_id']),
-                                      tooltip: 'Complete with photo',
+                                  
+                                  // Camera button for active tasks
+                                  if (!isCompleted) ...[
+                                    const SizedBox(height: 8),
+                                    Center(
+                                      child: OutlinedButton.icon(
+                                        onPressed: () => _completeWithPhoto(task['_id']),
+                                        icon: const Icon(Icons.camera_alt, size: 18),
+                                        label: const Text('Adaugă poză'),
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: paleRoyalBlue,
+                                        ),
+                                      ),
                                     ),
-                                  if (task['points'] != null)
-                                    Chip(
-                                      label: Text('${task['points']}p'),
-                                      backgroundColor: paleRoyalBlue.withOpacity(0.2),
-                                    ),
+                                  ],
                                 ],
                               ),
                             ),
