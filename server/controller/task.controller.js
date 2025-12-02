@@ -127,6 +127,8 @@ exports.list = async (req, res) => {
   }
 };
 
+// Înlocuiește funcțiile update și updateWithPhoto în task.controller.js
+
 // UPDATE - Actualizează task (inclusiv toggle complete)
 exports.update = async (req, res) => {
   try {
@@ -164,13 +166,27 @@ exports.update = async (req, res) => {
     if (updates.status === 'completed' && task.status !== 'completed') {
       updates.completedAt = new Date();
       updates.completedBy = userId;
+      
+      // Calculează performanța
+      Object.assign(task, updates);
+      task.calculatePerformance();
+      await task.save();
+      
+      console.log(`Task completed: ${task.title}`);
+      console.log(`Time to complete: ${task.timeToComplete} minutes`);
+      console.log(`Completed on time: ${task.completedOnTime}`);
     } else if (updates.status === 'active') {
       updates.completedAt = undefined;
       updates.completedBy = undefined;
+      updates.timeToComplete = undefined;
+      updates.completedOnTime = undefined;
+      
+      Object.assign(task, updates);
+      await task.save();
+    } else {
+      Object.assign(task, updates);
+      await task.save();
     }
-    
-    Object.assign(task, updates);
-    await task.save();
     
     const populated = await Task.findById(task._id)
       .populate('assignedTo', 'name email')
@@ -208,15 +224,20 @@ exports.updateWithPhoto = async (req, res) => {
       return res.status(400).json({ error: 'Photo file is required' });
     }
 
-    // ✅ Save photo path with /uploads/ prefix
+    // Save photo + mark as completed
     task.photo = `/uploads/${req.file.filename}`;
     task.status = 'completed';
     task.completedAt = new Date();
     task.completedBy = userId;
+    
+    // Calculează performanța
+    task.calculatePerformance();
 
     await task.save();
 
     console.log('✅ Photo saved successfully:', task.photo);
+    console.log(`Time to complete: ${task.timeToComplete} minutes`);
+    console.log(`Completed on time: ${task.completedOnTime}`);
 
     const populated = await Task.findById(task._id)
       .populate('assignedTo', 'name email')
@@ -231,7 +252,6 @@ exports.updateWithPhoto = async (req, res) => {
     return res.status(500).json({ error: 'Server error' });
   }
 };
-
 // DELETE - Șterge task
 exports.delete = async (req, res) => {
   try {
@@ -417,6 +437,71 @@ exports.getById = async (req, res) => {
     return res.json(task);
   } catch (e) {
     console.error('get task by id error:', e);
+    return res.status(500).json({ error: 'Server error' });
+  }
+};
+
+
+// GET performance stats pentru un user
+exports.performanceStats = async (req, res) => {
+  try {
+    const userIdStr = req.user?.sub || req.user?.id || req.user;
+    if (!userIdStr) {
+      return res.status(401).json({ error: 'User ID is required' });
+    }
+    
+    const userId = new Types.ObjectId(userIdStr);
+    const { householdId } = req.query;
+    
+    let filter = { status: 'completed' };
+    
+    if (householdId) {
+      filter.household = new Types.ObjectId(householdId);
+      filter.type = 'group';
+    } else {
+      filter.owner = userId;
+      filter.type = 'personal';
+    }
+    
+    const completedTasks = await Task.find(filter);
+    
+    const stats = {
+      totalCompleted: completedTasks.length,
+      completedOnTime: completedTasks.filter(t => t.completedOnTime).length,
+      completedLate: completedTasks.filter(t => t.completedOnTime === false).length,
+      averageTimeToComplete: 0,
+      fastestCompletion: null,
+      slowestCompletion: null,
+    };
+    
+    if (completedTasks.length > 0) {
+      const times = completedTasks
+        .filter(t => t.timeToComplete)
+        .map(t => t.timeToComplete);
+      
+      if (times.length > 0) {
+        stats.averageTimeToComplete = Math.round(
+          times.reduce((a, b) => a + b, 0) / times.length
+        );
+        stats.fastestCompletion = Math.min(...times);
+        stats.slowestCompletion = Math.max(...times);
+      }
+    }
+    
+    // Failed tasks
+    const failedTasks = await Task.countDocuments({
+      ...filter,
+      status: 'failed'
+    });
+    
+    stats.failed = failedTasks;
+    stats.successRate = stats.totalCompleted + failedTasks > 0
+      ? Math.round((stats.totalCompleted / (stats.totalCompleted + failedTasks)) * 100)
+      : 100;
+    
+    return res.json(stats);
+  } catch (e) {
+    console.error('performance stats error:', e);
     return res.status(500).json({ error: 'Server error' });
   }
 };

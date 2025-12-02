@@ -30,6 +30,8 @@ router.get('/stats', fakeAuth, ctrl.stats);
 // ✅ GET /api/tasks/:id - get single task (TREBUIE SĂ FIE ÎNAINTE DE PATCH)
 router.get('/:id', fakeAuth, ctrl.getById);
 
+router.get('/performance', fakeAuth, ctrl.performanceStats);
+
 // PATCH /api/tasks/:id/photo - upload photo + complete task
 router.patch('/:id/photo', fakeAuth, upload.single('photo'), ctrl.updateWithPhoto);
 

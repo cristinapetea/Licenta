@@ -432,22 +432,30 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _FilterChip(
-                  label: 'Active',
-                  selected: _currentFilter == 'active',
-                  onTap: () {
-                    setState(() => _currentFilter = 'active');
-                    _loadTasks();
-                  },
-                ),
-                _FilterChip(
-                  label: 'Completed',
-                  selected: _currentFilter == 'completed',
-                  onTap: () {
-                    setState(() => _currentFilter = 'completed');
-                    _loadTasks();
-                  },
-                ),
+                    _FilterChip(
+                        label: 'Active',
+                        selected: _currentFilter == 'active',
+                        onTap: () {
+                          setState(() => _currentFilter = 'active');
+                          _loadTasks();
+                        },
+                      ),
+                      _FilterChip(
+                        label: 'Completed',
+                        selected: _currentFilter == 'completed',
+                        onTap: () {
+                          setState(() => _currentFilter = 'completed');
+                          _loadTasks();
+                        },
+                      ),
+                      _FilterChip(
+                        label: 'Failed',
+                        selected: _currentFilter == 'failed',
+                        onTap: () {
+                          setState(() => _currentFilter = 'failed');
+                          _loadTasks();
+                        },
+                      ),
                 _FilterChip(
                   label: 'All',
                   selected: _currentFilter == 'all',
