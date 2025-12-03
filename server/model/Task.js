@@ -16,10 +16,10 @@ const taskSchema = new Schema({
   owner: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   category: { type: String, trim: true },
   
-  // Status: active, completed, failed
+  // Status: active, completed, failed, all
   status: { 
     type: String, 
-    enum: ['active', 'completed', 'failed'], 
+    enum: ['active', 'completed', 'failed', 'all'], 
     default: 'active' 
   },
   

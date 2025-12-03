@@ -127,9 +127,9 @@ exports.list = async (req, res) => {
   }
 };
 
-// Înlocuiește funcțiile update și updateWithPhoto în task.controller.js
 
-// UPDATE - Actualizează task (inclusiv toggle complete)
+
+// UPDATE - Actualizează task (BLOCHEAZĂ dacă e failed)
 exports.update = async (req, res) => {
   try {
     const userIdStr = req.user?.sub || req.user?.id || req.user;
@@ -144,6 +144,14 @@ exports.update = async (req, res) => {
     const task = await Task.findById(id);
     if (!task) {
       return res.status(404).json({ error: 'Task not found' });
+    }
+    
+    // ❌ BLOCHEAZĂ modificările pentru task-uri failed
+    if (task.status === 'failed') {
+      return res.status(403).json({ 
+        error: 'Cannot modify failed tasks',
+        message: 'This task has passed its deadline and cannot be completed anymore.'
+      });
     }
     
     // Verifică permisiuni
@@ -172,9 +180,9 @@ exports.update = async (req, res) => {
       task.calculatePerformance();
       await task.save();
       
-      console.log(`Task completed: ${task.title}`);
-      console.log(`Time to complete: ${task.timeToComplete} minutes`);
-      console.log(`Completed on time: ${task.completedOnTime}`);
+      console.log(`✅ Task completed: ${task.title}`);
+      console.log(`⏱️  Time to complete: ${task.timeToComplete} minutes`);
+      console.log(`${task.completedOnTime ? '✅' : '⏰'} Completed on time: ${task.completedOnTime}`);
     } else if (updates.status === 'active') {
       updates.completedAt = undefined;
       updates.completedBy = undefined;
@@ -200,7 +208,7 @@ exports.update = async (req, res) => {
   }
 };
 
-// UPDATE WITH PHOTO - Upload photo & complete task
+// UPDATE WITH PHOTO - BLOCHEAZĂ pentru task-uri failed
 exports.updateWithPhoto = async (req, res) => {
   try {
     console.log('=== UPDATE WITH PHOTO ===');
@@ -217,6 +225,14 @@ exports.updateWithPhoto = async (req, res) => {
     const task = await Task.findById(id);
     if (!task) {
       return res.status(404).json({ error: 'Task not found' });
+    }
+
+    // ❌ BLOCHEAZĂ upload de poze pentru task-uri failed
+    if (task.status === 'failed') {
+      return res.status(403).json({ 
+        error: 'Cannot complete failed tasks',
+        message: 'This task has passed its deadline and cannot be completed anymore.'
+      });
     }
 
     if (!req.file) {
@@ -236,15 +252,13 @@ exports.updateWithPhoto = async (req, res) => {
     await task.save();
 
     console.log('✅ Photo saved successfully:', task.photo);
-    console.log(`Time to complete: ${task.timeToComplete} minutes`);
-    console.log(`Completed on time: ${task.completedOnTime}`);
+    console.log(`⏱️  Time to complete: ${task.timeToComplete} minutes`);
+    console.log(`${task.completedOnTime ? '✅' : '⏰'} Completed on time: ${task.completedOnTime}`);
 
     const populated = await Task.findById(task._id)
       .populate('assignedTo', 'name email')
       .populate('owner', 'name email')
       .populate('completedBy', 'name email');
-
-    console.log('Response task photo path:', populated.photo);
 
     return res.json(populated);
   } catch (e) {
@@ -252,6 +266,8 @@ exports.updateWithPhoto = async (req, res) => {
     return res.status(500).json({ error: 'Server error' });
   }
 };
+
+
 // DELETE - Șterge task
 exports.delete = async (req, res) => {
   try {

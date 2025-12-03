@@ -64,14 +64,23 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
       final uri = Uri.parse(
         '${Api.base}/api/tasks?type=group&householdId=${widget.householdId}&status=$_currentFilter',
       );
+      
+      print('Loading tasks with filter: $_currentFilter');
+      print('Request URL: $uri');
+      
       final resp = await http.get(
         uri,
         headers: {'Content-Type': 'application/json', 'x-user': widget.userId},
       ).timeout(const Duration(seconds: 10));
 
+      print('Response status: ${resp.statusCode}');
+      
       if (resp.statusCode == 200) {
+        final tasks = jsonDecode(resp.body) as List;
+        print('Loaded ${tasks.length} tasks with status: $_currentFilter');
+        
         setState(() {
-          _tasks = jsonDecode(resp.body) as List;
+          _tasks = tasks;
           _isLoading = false;
         });
       }
@@ -92,6 +101,16 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
 
       if (resp.statusCode == 200) {
         _loadTasks();
+      } else if (resp.statusCode == 403) {
+        final error = jsonDecode(resp.body);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(error['message'] ?? 'Cannot modify this task'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     } catch (e) {
       print('Error toggling task: $e');
@@ -164,6 +183,14 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
           ),
         );
         _loadTasks();
+      } else if (response.statusCode == 403) {
+        final error = jsonDecode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(error['message'] ?? 'Cannot complete this task'),
+            backgroundColor: Colors.red,
+          ),
+        );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -330,21 +357,18 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
   }
 
   Future<void> _openShoppingList() async {
-    // Search for existing shopping task
     String? shoppingTaskId;
     String? shoppingTaskTitle;
     
     for (var task in _tasks) {
       if (task['title']?.toLowerCase().contains('shopping') == true ||
-          task['title']?.toLowerCase().contains('cumpărături') == true ||
-          task['title']?.toLowerCase().contains('cumparaturi') == true) {
+          task['title']?.toLowerCase().contains('groceries') == true) {
         shoppingTaskId = task['_id'];
         shoppingTaskTitle = task['title'];
         break;
       }
     }
     
-    // If it doesn't exist, create one
     if (shoppingTaskId == null) {
       try {
         final uri = Uri.parse('${Api.base}/api/tasks');
@@ -364,7 +388,7 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
           final newTask = jsonDecode(resp.body);
           shoppingTaskId = newTask['_id'];
           shoppingTaskTitle = newTask['title'];
-          _loadTasks(); // Reload list
+          _loadTasks();
         } else {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
@@ -388,7 +412,6 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
       }
     }
     
-    // Navigate to shopping list
     if (shoppingTaskId != null && mounted) {
       Navigator.push(
         context,
@@ -396,7 +419,7 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
           builder: (context) => ShoppingListPage(
             userId: widget.userId,
             taskId: shoppingTaskId!,
-            taskTitle: 'Shopping List',
+            taskTitle: shoppingTaskTitle ?? 'Shopping List',
           ),
         ),
       );
@@ -415,7 +438,6 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
-          // ✅ SHOPPING CART BUTTON
           IconButton(
             icon: const Icon(Icons.shopping_cart),
             onPressed: _openShoppingList,
@@ -432,30 +454,31 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                    _FilterChip(
-                        label: 'Active',
-                        selected: _currentFilter == 'active',
-                        onTap: () {
-                          setState(() => _currentFilter = 'active');
-                          _loadTasks();
-                        },
-                      ),
-                      _FilterChip(
-                        label: 'Completed',
-                        selected: _currentFilter == 'completed',
-                        onTap: () {
-                          setState(() => _currentFilter = 'completed');
-                          _loadTasks();
-                        },
-                      ),
-                      _FilterChip(
-                        label: 'Failed',
-                        selected: _currentFilter == 'failed',
-                        onTap: () {
-                          setState(() => _currentFilter = 'failed');
-                          _loadTasks();
-                        },
-                      ),
+                _FilterChip(
+                  label: 'Active',
+                  selected: _currentFilter == 'active',
+                  onTap: () {
+                    setState(() => _currentFilter = 'active');
+                    _loadTasks();
+                  },
+                ),
+                _FilterChip(
+                  label: 'Completed',
+                  selected: _currentFilter == 'completed',
+                  onTap: () {
+                    setState(() => _currentFilter = 'completed');
+                    _loadTasks();
+                  },
+                ),
+                _FilterChip(
+                  label: 'Failed',
+                  selected: _currentFilter == 'failed',
+                  onTap: () {
+                    setState(() => _currentFilter = 'failed');
+                    _loadTasks();
+                  },
+                  color: Colors.red,
+                ),
                 _FilterChip(
                   label: 'All',
                   selected: _currentFilter == 'all',
@@ -476,10 +499,19 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                     ? Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(Icons.task_alt, size: 64, color: Colors.grey),
-                            SizedBox(height: 16),
-                            Text('No tasks yet', style: TextStyle(color: Colors.grey)),
+                          children: [
+                            Icon(
+                              _currentFilter == 'failed' ? Icons.check_circle : Icons.task_alt,
+                              size: 64,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              _currentFilter == 'failed' 
+                                  ? 'No failed tasks yet' 
+                                  : 'No tasks yet',
+                              style: const TextStyle(color: Colors.grey),
+                            ),
                           ],
                         ),
                       )
@@ -489,23 +521,24 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                         itemBuilder: (ctx, i) {
                           final task = _tasks[i];
                           final isCompleted = task['status'] == 'completed';
+                          final isFailed = task['status'] == 'failed';
                           final assignedName = task['assignedTo']?['name'] ?? 'Unassigned';
 
                           return Card(
                             margin: const EdgeInsets.only(bottom: 12),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            color: isFailed ? Colors.red[50] : null,
                             child: Padding(
                               padding: const EdgeInsets.all(12),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // Header: Checkbox + Title + Points
                                   Row(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Checkbox(
-                                        value: isCompleted,
-                                        onChanged: (_) => _toggleComplete(task['_id'], isCompleted),
+                                        value: isFailed ? false : isCompleted,
+                                        onChanged: isFailed ? null : (_) => _toggleComplete(task['_id'], isCompleted),
                                         activeColor: paleRoyalBlue,
                                       ),
                                       Expanded(
@@ -513,12 +546,31 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             const SizedBox(height: 12),
+                                            if (isFailed) ...[
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.red,
+                                                  borderRadius: BorderRadius.circular(8),
+                                                ),
+                                                child: const Text(
+                                                  '❌ FAILED - Deadline passed',
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(height: 8),
+                                            ],
                                             Text(
                                               task['title'] ?? '',
                                               style: TextStyle(
-                                                decoration: isCompleted ? TextDecoration.lineThrough : null,
+                                                decoration: isCompleted || isFailed ? TextDecoration.lineThrough : null,
                                                 fontWeight: FontWeight.w600,
                                                 fontSize: 16,
+                                                color: isFailed ? Colors.red[700] : null,
                                               ),
                                             ),
                                             if (task['description']?.isNotEmpty == true) ...[
@@ -531,12 +583,13 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                                           ],
                                         ),
                                       ),
-                                      // Points badge
                                       if (task['points'] != null)
                                         Container(
                                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                                           decoration: BoxDecoration(
-                                            color: paleRoyalBlue.withOpacity(0.2),
+                                            color: isFailed 
+                                                ? Colors.red.withOpacity(0.2)
+                                                : paleRoyalBlue.withOpacity(0.2),
                                             borderRadius: BorderRadius.circular(12),
                                           ),
                                           child: Text(
@@ -552,7 +605,6 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                                   
                                   const SizedBox(height: 8),
                                   
-                                  // Info row: Person + Date
                                   Padding(
                                     padding: const EdgeInsets.only(left: 48),
                                     child: Row(
@@ -576,7 +628,6 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                                     ),
                                   ),
                                   
-                                  // Photo if exists
                                   if (task['photo'] != null) ...[
                                     const SizedBox(height: 12),
                                     ClipRRect(
@@ -597,8 +648,7 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                                     ),
                                   ],
                                   
-                                  // Camera button for active tasks
-                                  if (!isCompleted) ...[
+                                  if (!isCompleted && !isFailed) ...[
                                     const SizedBox(height: 8),
                                     Center(
                                       child: OutlinedButton.icon(
@@ -608,6 +658,33 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                                         style: OutlinedButton.styleFrom(
                                           foregroundColor: paleRoyalBlue,
                                         ),
+                                      ),
+                                    ),
+                                  ],
+                                  
+                                  if (isFailed) ...[
+                                    const SizedBox(height: 8),
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: Colors.red[100],
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(color: Colors.red[300]!),
+                                      ),
+                                      child: Row(
+                                        children: const [
+                                          Icon(Icons.info_outline, color: Colors.red, size: 20),
+                                          SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              'This task cannot be completed because the deadline has passed.',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.red,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ],
@@ -643,21 +720,25 @@ class _FilterChip extends StatelessWidget {
   final String label;
   final bool selected;
   final VoidCallback onTap;
+  final Color? color;
 
   const _FilterChip({
     required this.label,
     required this.selected,
     required this.onTap,
+    this.color,
   });
 
   @override
   Widget build(BuildContext context) {
+    final chipColor = color ?? const Color(0xFF7E9BFF);
+    
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFF7E9BFF) : Colors.grey[200],
+          color: selected ? chipColor : Colors.grey[200],
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(
