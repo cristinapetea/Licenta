@@ -16,7 +16,7 @@ class PersonalTasksPage extends StatefulWidget {
 class _PersonalTasksPageState extends State<PersonalTasksPage> {
   List<dynamic> _tasks = [];
   Map<String, int> _categoryStats = {};
-  String _currentTab = 'today'; // today, week, all
+  String _currentFilter = 'active'; // active, completed, failed, all
   bool _isLoading = true;
 
   final List<Map<String, dynamic>> _categories = [
@@ -35,14 +35,23 @@ class _PersonalTasksPageState extends State<PersonalTasksPage> {
   Future<void> _loadTasks() async {
     setState(() => _isLoading = true);
     try {
-      final uri = Uri.parse('${Api.base}/api/tasks?type=personal&status=all');
+      final uri = Uri.parse(
+        '${Api.base}/api/tasks?type=personal&status=$_currentFilter',
+      );
+      
+      print('Loading personal tasks with filter: $_currentFilter');
+      print('Request URL: $uri');
+      
       final resp = await http.get(
         uri,
         headers: {'Content-Type': 'application/json', 'x-user': widget.userId},
       ).timeout(const Duration(seconds: 10));
 
+      print('Response status: ${resp.statusCode}');
+      
       if (resp.statusCode == 200) {
         final allTasks = jsonDecode(resp.body) as List;
+        print('Loaded ${allTasks.length} tasks with status: $_currentFilter');
         
         // Calculate category statistics
         final stats = <String, int>{};
@@ -74,6 +83,16 @@ class _PersonalTasksPageState extends State<PersonalTasksPage> {
 
       if (resp.statusCode == 200) {
         _loadTasks();
+      } else if (resp.statusCode == 403) {
+        final error = jsonDecode(resp.body);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(error['message'] ?? 'Cannot modify this task'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     } catch (e) {
       print('Error toggling task: $e');
@@ -205,10 +224,8 @@ class _PersonalTasksPageState extends State<PersonalTasksPage> {
                   'category': selectedCategory ?? 'Other',
                 };
 
-               // FIX DATE HERE (VARIANTA 1)
                 if (selectedDate != null) {
-                  body['dueDate'] =
-                      "${selectedDate!.year}-${selectedDate!.month.toString().padLeft(2, '0')}-${selectedDate!.day.toString().padLeft(2, '0')}";
+                  body['dueDate'] = selectedDate!.toIso8601String();
                 }
 
                 if (selectedTime != null) {
@@ -242,33 +259,12 @@ class _PersonalTasksPageState extends State<PersonalTasksPage> {
     );
   }
 
-  List<dynamic> _getFilteredTasks() {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final weekEnd = today.add(const Duration(days: 7));
-
-    return _tasks.where((task) {
-      if (_currentTab == 'today') {
-        if (task['dueDate'] == null) return false;
-        final dueDate = DateTime.parse(task['dueDate']);
-        final dueDay = DateTime(dueDate.year, dueDate.month, dueDate.day);
-        return dueDay == today;
-      } else if (_currentTab == 'week') {
-        if (task['dueDate'] == null) return false;
-        final dueDate = DateTime.parse(task['dueDate']);
-        final dueDay = DateTime(dueDate.year, dueDate.month, dueDate.day);
-        return dueDay.isAfter(today.subtract(const Duration(days: 1))) && dueDay.isBefore(weekEnd);
-      }
-      return true;
-    }).toList();
-  }
-
   @override
   Widget build(BuildContext context) {
     const paleRoyalBlue = Color(0xFF7E9BFF);
-    final filteredTasks = _getFilteredTasks();
-    final completedCount = filteredTasks.where((t) => t['status'] == 'completed').length;
-    final completionRate = filteredTasks.isEmpty ? 0.0 : completedCount / filteredTasks.length;
+    final completedCount = _tasks.where((t) => t['status'] == 'completed').length;
+    final activeCount = _tasks.where((t) => t['status'] == 'active').length;
+    final failedCount = _tasks.where((t) => t['status'] == 'failed').length;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
@@ -290,27 +286,19 @@ class _PersonalTasksPageState extends State<PersonalTasksPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     _StatBox(
-                      label: 'Completion Rate',
-                      value: '${(completionRate * 100).toInt()}%',
+                      label: 'Active',
+                      value: '$activeCount',
+                      color: paleRoyalBlue,
                     ),
                     _StatBox(
-                      label: 'This Week',
-                      value: '${_getFilteredTasks().length}',
+                      label: 'Completed',
+                      value: '$completedCount',
+                      color: Colors.green,
                     ),
                     _StatBox(
-                      label: 'Today',
-                      value: '${_tasks.where((t) {
-                        if (t['dueDate'] == null) return false;
-                        try {
-                          final dueDate = DateTime.parse(t['dueDate']);
-                          final today = DateTime.now();
-                          return dueDate.year == today.year &&
-                              dueDate.month == today.month &&
-                              dueDate.day == today.day;
-                        } catch (e) {
-                          return false;
-                        }
-                      }).length}',
+                      label: 'Failed',
+                      value: '$failedCount',
+                      color: Colors.red,
                     ),
                   ],
                 ),
@@ -343,27 +331,45 @@ class _PersonalTasksPageState extends State<PersonalTasksPage> {
             ),
           ),
 
-          // Tabs
+          // Filters
           Container(
             color: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _TabButton(
-                  label: 'Today',
-                  selected: _currentTab == 'today',
-                  onTap: () => setState(() => _currentTab = 'today'),
+                _FilterChip(
+                  label: 'Active',
+                  selected: _currentFilter == 'active',
+                  onTap: () {
+                    setState(() => _currentFilter = 'active');
+                    _loadTasks();
+                  },
                 ),
-                _TabButton(
-                  label: 'Week',
-                  selected: _currentTab == 'week',
-                  onTap: () => setState(() => _currentTab = 'week'),
+                _FilterChip(
+                  label: 'Completed',
+                  selected: _currentFilter == 'completed',
+                  onTap: () {
+                    setState(() => _currentFilter = 'completed');
+                    _loadTasks();
+                  },
                 ),
-                _TabButton(
+                _FilterChip(
+                  label: 'Failed',
+                  selected: _currentFilter == 'failed',
+                  onTap: () {
+                    setState(() => _currentFilter = 'failed');
+                    _loadTasks();
+                  },
+                  color: Colors.red,
+                ),
+                _FilterChip(
                   label: 'All',
-                  selected: _currentTab == 'all',
-                  onTap: () => setState(() => _currentTab = 'all'),
+                  selected: _currentFilter == 'all',
+                  onTap: () {
+                    setState(() => _currentFilter = 'all');
+                    _loadTasks();
+                  },
                 ),
               ],
             ),
@@ -373,23 +379,33 @@ class _PersonalTasksPageState extends State<PersonalTasksPage> {
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : filteredTasks.isEmpty
+                : _tasks.isEmpty
                     ? Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(Icons.task_alt, size: 64, color: Colors.grey),
-                            SizedBox(height: 16),
-                            Text('No tasks yet', style: TextStyle(color: Colors.grey)),
+                          children: [
+                            Icon(
+                              _currentFilter == 'failed' ? Icons.check_circle : Icons.task_alt,
+                              size: 64,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              _currentFilter == 'failed' 
+                                  ? 'No failed tasks yet' 
+                                  : 'No tasks yet',
+                              style: const TextStyle(color: Colors.grey),
+                            ),
                           ],
                         ),
                       )
                     : ListView.builder(
                         padding: const EdgeInsets.all(16),
-                        itemCount: filteredTasks.length,
+                        itemCount: _tasks.length,
                         itemBuilder: (ctx, i) {
-                          final task = filteredTasks[i];
+                          final task = _tasks[i];
                           final isCompleted = task['status'] == 'completed';
+                          final isFailed = task['status'] == 'failed';
                           final categoryName = task['category'] ?? 'Other';
                           final category = _categories.firstWhere(
                             (c) => c['name'] == categoryName,
@@ -399,46 +415,133 @@ class _PersonalTasksPageState extends State<PersonalTasksPage> {
                           return Card(
                             margin: const EdgeInsets.only(bottom: 12),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            child: ListTile(
-                              leading: Icon(
-                                category['icon'] as IconData,
-                                color: category['color'] as Color,
-                              ),
-                              title: Text(
-                                task['title'] ?? '',
-                                style: TextStyle(
-                                  decoration: isCompleted ? TextDecoration.lineThrough : null,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              subtitle: Column(
+                            color: isFailed ? Colors.red[50] : null,
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  if (task['description']?.toString().isNotEmpty == true)
-                                    Text(task['description'].toString()),
-                                  if (task['dueDate'] != null || task['dueTime'] != null)
-                                    Row(
-                                      children: [
-                                        const Icon(Icons.schedule, size: 14, color: Colors.grey),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          _formatDateTime(task['dueDate'], task['dueTime']),
-                                          style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Icon(
+                                        category['icon'] as IconData,
+                                        color: isFailed 
+                                            ? Colors.red[700] 
+                                            : category['color'] as Color,
+                                        size: 24,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            if (isFailed) ...[
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.red,
+                                                  borderRadius: BorderRadius.circular(8),
+                                                ),
+                                                child: const Text(
+                                                  '❌ FAILED - Deadline passed',
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(height: 8),
+                                            ],
+                                            Text(
+                                              task['title'] ?? '',
+                                              style: TextStyle(
+                                                decoration: isCompleted || isFailed 
+                                                    ? TextDecoration.lineThrough 
+                                                    : null,
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 16,
+                                                color: isFailed ? Colors.red[700] : null,
+                                              ),
+                                            ),
+                                            if (task['description']?.toString().isNotEmpty == true) ...[
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                task['description'].toString(),
+                                                style: TextStyle(
+                                                  fontSize: 14,
+                                                  color: isFailed ? Colors.red[400] : Colors.grey,
+                                                ),
+                                              ),
+                                            ],
+                                            if (task['dueDate'] != null || task['dueTime'] != null) ...[
+                                              const SizedBox(height: 8),
+                                              Row(
+                                                children: [
+                                                  Icon(
+                                                    Icons.schedule, 
+                                                    size: 14, 
+                                                    color: isFailed ? Colors.red[700] : Colors.grey,
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    _formatDateTime(task['dueDate'], task['dueTime']),
+                                                    style: TextStyle(
+                                                      fontSize: 12, 
+                                                      color: isFailed ? Colors.red[700] : Colors.grey,
+                                                      fontWeight: isFailed ? FontWeight.w600 : FontWeight.normal,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ],
                                         ),
-                                      ],
-                                    ),
-                                ],
-                              ),
-                              trailing: Transform.scale(
-                                scale: 1.2,
-                                child: Checkbox(
-                                  value: isCompleted,
-                                  onChanged: (_) => _toggleComplete(task['_id'], isCompleted),
-                                  activeColor: paleRoyalBlue,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      Transform.scale(
+                                        scale: 1.2,
+                                        child: Checkbox(
+                                          value: isFailed ? false : isCompleted,
+                                          onChanged: isFailed 
+                                              ? null 
+                                              : (_) => _toggleComplete(task['_id'], isCompleted),
+                                          activeColor: paleRoyalBlue,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ),
+                                  
+                                  if (isFailed) ...[
+                                    const SizedBox(height: 12),
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: Colors.red[100],
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(color: Colors.red[300]!),
+                                      ),
+                                      child: Row(
+                                        children: const [
+                                          Icon(Icons.info_outline, color: Colors.red, size: 20),
+                                          SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              'This task cannot be completed because the deadline has passed.',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.red,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ],
                               ),
                             ),
                           );
@@ -469,13 +572,26 @@ class _PersonalTasksPageState extends State<PersonalTasksPage> {
 
 class _StatBox extends StatelessWidget {
   final String label, value;
-  const _StatBox({required this.label, required this.value});
+  final Color? color;
+  
+  const _StatBox({
+    required this.label, 
+    required this.value,
+    this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+        Text(
+          value, 
+          style: TextStyle(
+            fontSize: 20, 
+            fontWeight: FontWeight.w700,
+            color: color,
+          ),
+        ),
         const SizedBox(height: 4),
         Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
       ],
@@ -483,21 +599,29 @@ class _StatBox extends StatelessWidget {
   }
 }
 
-class _TabButton extends StatelessWidget {
+class _FilterChip extends StatelessWidget {
   final String label;
   final bool selected;
   final VoidCallback onTap;
+  final Color? color;
 
-  const _TabButton({required this.label, required this.selected, required this.onTap});
+  const _FilterChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final chipColor = color ?? const Color(0xFF7E9BFF);
+    
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFF7E9BFF) : Colors.grey[200],
+          color: selected ? chipColor : Colors.grey[200],
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(
