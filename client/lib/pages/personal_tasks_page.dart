@@ -16,7 +16,7 @@ class PersonalTasksPage extends StatefulWidget {
 class _PersonalTasksPageState extends State<PersonalTasksPage> {
   List<dynamic> _tasks = [];
   Map<String, int> _categoryStats = {};
-  String _currentFilter = 'active'; // active, completed, failed, all
+  String _currentFilter = 'today'; // today, week, active, completed, failed
   bool _isLoading = true;
 
   final List<Map<String, dynamic>> _categories = [
@@ -35,23 +35,16 @@ class _PersonalTasksPageState extends State<PersonalTasksPage> {
   Future<void> _loadTasks() async {
     setState(() => _isLoading = true);
     try {
-      final uri = Uri.parse(
-        '${Api.base}/api/tasks?type=personal&status=$_currentFilter',
-      );
-      
-      print('Loading personal tasks with filter: $_currentFilter');
-      print('Request URL: $uri');
+      // Load ALL tasks to filter client-side
+      final uri = Uri.parse('${Api.base}/api/tasks?type=personal&status=all');
       
       final resp = await http.get(
         uri,
         headers: {'Content-Type': 'application/json', 'x-user': widget.userId},
       ).timeout(const Duration(seconds: 10));
 
-      print('Response status: ${resp.statusCode}');
-      
       if (resp.statusCode == 200) {
         final allTasks = jsonDecode(resp.body) as List;
-        print('Loaded ${allTasks.length} tasks with status: $_currentFilter');
         
         // Calculate category statistics
         final stats = <String, int>{};
@@ -224,8 +217,14 @@ class _PersonalTasksPageState extends State<PersonalTasksPage> {
                   'category': selectedCategory ?? 'Other',
                 };
 
+                // FIX: Store date in UTC to avoid timezone issues
                 if (selectedDate != null) {
-                  body['dueDate'] = selectedDate!.toIso8601String();
+                  final utcDate = DateTime.utc(
+                    selectedDate!.year,
+                    selectedDate!.month,
+                    selectedDate!.day,
+                  );
+                  body['dueDate'] = utcDate.toIso8601String();
                 }
 
                 if (selectedTime != null) {
@@ -259,12 +258,137 @@ class _PersonalTasksPageState extends State<PersonalTasksPage> {
     );
   }
 
+  // Get tasks filtered by current week AND filter
+  List<dynamic> _getFilteredTasks() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    
+    // Get start of week (Monday)
+    final weekStart = today.subtract(Duration(days: now.weekday - 1));
+    final weekEnd = weekStart.add(const Duration(days: 7));
+
+    return _tasks.where((task) {
+      // First filter: Only show tasks from current week
+      if (task['dueDate'] != null) {
+        try {
+          final dueDate = DateTime.parse(task['dueDate']);
+          final dueDay = DateTime(dueDate.year, dueDate.month, dueDate.day);
+          
+          // Skip if not in current week
+          if (dueDay.isBefore(weekStart) || dueDay.isAfter(weekEnd.subtract(const Duration(days: 1)))) {
+            return false;
+          }
+        } catch (e) {
+          return false;
+        }
+      } else {
+        // Tasks without due date are excluded
+        return false;
+      }
+
+      // Second filter: Apply current tab filter
+      if (_currentFilter == 'today') {
+        try {
+          final dueDate = DateTime.parse(task['dueDate']);
+          final dueDay = DateTime(dueDate.year, dueDate.month, dueDate.day);
+          return dueDay == today;
+        } catch (e) {
+          return false;
+        }
+      } else if (_currentFilter == 'week') {
+        return true; // Already filtered by week above
+      } else if (_currentFilter == 'active') {
+        return task['status'] == 'active';
+      } else if (_currentFilter == 'completed') {
+        return task['status'] == 'completed';
+      } else if (_currentFilter == 'failed') {
+        return task['status'] == 'failed';
+      }
+      
+      return true;
+    }).toList();
+  }
+
+  // Get stats for current week only
+  Map<String, int> _getWeekStats() {
+    final now = DateTime.now();
+    final weekStart = now.subtract(Duration(days: now.weekday - 1));
+    final weekStart0 = DateTime(weekStart.year, weekStart.month, weekStart.day);
+    final weekEnd = weekStart0.add(const Duration(days: 7));
+
+    int activeCount = 0;
+    int completedCount = 0;
+    int failedCount = 0;
+
+    for (var task in _tasks) {
+      if (task['dueDate'] == null) continue;
+      
+      try {
+        final dueDate = DateTime.parse(task['dueDate']);
+        final dueDay = DateTime(dueDate.year, dueDate.month, dueDate.day);
+        
+        // Check if task is in current week
+        if (dueDay.isAfter(weekStart0.subtract(const Duration(days: 1))) && 
+            dueDay.isBefore(weekEnd)) {
+          if (task['status'] == 'active') activeCount++;
+          else if (task['status'] == 'completed') completedCount++;
+          else if (task['status'] == 'failed') failedCount++;
+        }
+      } catch (e) {
+        continue;
+      }
+    }
+
+    return {
+      'active': activeCount,
+      'completed': completedCount,
+      'failed': failedCount,
+    };
+  }
+
+  String _getWeekRangeText() {
+    final now = DateTime.now();
+    final weekStart = now.subtract(Duration(days: now.weekday - 1));
+    final weekEnd = weekStart.add(const Duration(days: 6));
+    
+    return '${weekStart.day}/${weekStart.month} - ${weekEnd.day}/${weekEnd.month}';
+  }
+
+  IconData _getEmptyIcon() {
+    switch (_currentFilter) {
+      case 'today':
+        return Icons.today;
+      case 'week':
+        return Icons.calendar_view_week;
+      case 'failed':
+        return Icons.check_circle;
+      default:
+        return Icons.task_alt;
+    }
+  }
+
+  String _getEmptyMessage() {
+    switch (_currentFilter) {
+      case 'today':
+        return 'No tasks for today';
+      case 'week':
+        return 'No tasks this week';
+      case 'failed':
+        return 'No failed tasks this week';
+      case 'completed':
+        return 'No completed tasks this week';
+      case 'active':
+        return 'No active tasks this week';
+      default:
+        return 'No tasks this week';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     const paleRoyalBlue = Color(0xFF7E9BFF);
-    final completedCount = _tasks.where((t) => t['status'] == 'completed').length;
-    final activeCount = _tasks.where((t) => t['status'] == 'active').length;
-    final failedCount = _tasks.where((t) => t['status'] == 'failed').length;
+    final weekStats = _getWeekStats();
+    final filteredTasks = _getFilteredTasks();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
@@ -276,28 +400,50 @@ class _PersonalTasksPageState extends State<PersonalTasksPage> {
       ),
       body: Column(
         children: [
-          // Stats header
+          // Stats header - Current Week
           Container(
             color: Colors.white,
             padding: const EdgeInsets.all(16),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Current Week Stats',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    Text(
+                      _getWeekRangeText(),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     _StatBox(
                       label: 'Active',
-                      value: '$activeCount',
+                      value: '${weekStats['active']}',
                       color: paleRoyalBlue,
                     ),
                     _StatBox(
                       label: 'Completed',
-                      value: '$completedCount',
+                      value: '${weekStats['completed']}',
                       color: Colors.green,
                     ),
                     _StatBox(
                       label: 'Failed',
-                      value: '$failedCount',
+                      value: '${weekStats['failed']}',
                       color: Colors.red,
                     ),
                   ],
@@ -335,43 +481,45 @@ class _PersonalTasksPageState extends State<PersonalTasksPage> {
           Container(
             color: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _FilterChip(
-                  label: 'Active',
-                  selected: _currentFilter == 'active',
-                  onTap: () {
-                    setState(() => _currentFilter = 'active');
-                    _loadTasks();
-                  },
-                ),
-                _FilterChip(
-                  label: 'Completed',
-                  selected: _currentFilter == 'completed',
-                  onTap: () {
-                    setState(() => _currentFilter = 'completed');
-                    _loadTasks();
-                  },
-                ),
-                _FilterChip(
-                  label: 'Failed',
-                  selected: _currentFilter == 'failed',
-                  onTap: () {
-                    setState(() => _currentFilter = 'failed');
-                    _loadTasks();
-                  },
-                  color: Colors.red,
-                ),
-                _FilterChip(
-                  label: 'All',
-                  selected: _currentFilter == 'all',
-                  onTap: () {
-                    setState(() => _currentFilter = 'all');
-                    _loadTasks();
-                  },
-                ),
-              ],
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const SizedBox(width: 8),
+                  _FilterChip(
+                    label: 'Today',
+                    selected: _currentFilter == 'today',
+                    onTap: () => setState(() => _currentFilter = 'today'),
+                  ),
+                  const SizedBox(width: 8),
+                  _FilterChip(
+                    label: 'Week',
+                    selected: _currentFilter == 'week',
+                    onTap: () => setState(() => _currentFilter = 'week'),
+                  ),
+                  const SizedBox(width: 8),
+                  _FilterChip(
+                    label: 'Active',
+                    selected: _currentFilter == 'active',
+                    onTap: () => setState(() => _currentFilter = 'active'),
+                  ),
+                  const SizedBox(width: 8),
+                  _FilterChip(
+                    label: 'Completed',
+                    selected: _currentFilter == 'completed',
+                    onTap: () => setState(() => _currentFilter = 'completed'),
+                  ),
+                  const SizedBox(width: 8),
+                  _FilterChip(
+                    label: 'Failed',
+                    selected: _currentFilter == 'failed',
+                    onTap: () => setState(() => _currentFilter = 'failed'),
+                    color: Colors.red,
+                  ),
+                  const SizedBox(width: 8),
+                ],
+              ),
             ),
           ),
 
@@ -379,21 +527,19 @@ class _PersonalTasksPageState extends State<PersonalTasksPage> {
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : _tasks.isEmpty
+                : filteredTasks.isEmpty
                     ? Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
-                              _currentFilter == 'failed' ? Icons.check_circle : Icons.task_alt,
+                              _getEmptyIcon(),
                               size: 64,
                               color: Colors.grey,
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              _currentFilter == 'failed' 
-                                  ? 'No failed tasks yet' 
-                                  : 'No tasks yet',
+                              _getEmptyMessage(),
                               style: const TextStyle(color: Colors.grey),
                             ),
                           ],
@@ -401,9 +547,9 @@ class _PersonalTasksPageState extends State<PersonalTasksPage> {
                       )
                     : ListView.builder(
                         padding: const EdgeInsets.all(16),
-                        itemCount: _tasks.length,
+                        itemCount: filteredTasks.length,
                         itemBuilder: (ctx, i) {
-                          final task = _tasks[i];
+                          final task = filteredTasks[i];
                           final isCompleted = task['status'] == 'completed';
                           final isFailed = task['status'] == 'failed';
                           final categoryName = task['category'] ?? 'Other';
