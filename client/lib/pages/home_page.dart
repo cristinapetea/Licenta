@@ -5,7 +5,7 @@ import '../api.dart';
 import 'profile_page.dart';
 import 'group_tasks_page.dart';
 import 'personal_tasks_page.dart';
-import 'ranking_page.dart'; // ADD THIS IMPORT
+import 'ranking_page.dart';
 
 class HomePage extends StatefulWidget {
   final String? userId;
@@ -226,38 +226,44 @@ class _HomePageState extends State<HomePage> {
                       ),
                       const SizedBox(height: 16),
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          _QuickActionButton(
-                            icon: Icons.group,
-                            label: 'Group\nTasks',
-                            color: paleRoyalBlue,
-                            onTap: () => _onTabTapped(1),
+                          Expanded(
+                            child: _QuickActionButton(
+                              icon: Icons.group,
+                              label: 'Group\nTasks',
+                              color: paleRoyalBlue,
+                              onTap: () => _onTabTapped(1),
+                            ),
                           ),
-                          _QuickActionButton(
-                            icon: Icons.person,
-                            label: 'Personal\nTasks',
-                            color: palePurple,
-                            onTap: () => _onTabTapped(2),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _QuickActionButton(
+                              icon: Icons.person,
+                              label: 'Personal\nTasks',
+                              color: palePurple,
+                              onTap: () => _onTabTapped(2),
+                            ),
                           ),
-                          // NEW: Ranking button
-                          _QuickActionButton(
-                            icon: Icons.emoji_events,
-                            label: 'Ranking',
-                            color: const Color(0xFFFFD700),
-                            onTap: () {
-                              if (_householdId != null) {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => RankingPage(
-                                      userId: _userId!,
-                                      householdId: _householdId!,
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _QuickActionButton(
+                              icon: Icons.emoji_events,
+                              label: 'Ranking',
+                              color: const Color(0xFFFFD700),
+                              onTap: () {
+                                if (_householdId != null) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => RankingPage(
+                                        userId: _userId!,
+                                        householdId: _householdId!,
+                                      ),
                                     ),
-                                  ),
-                                );
-                              }
-                            },
+                                  );
+                                }
+                              },
+                            ),
                           ),
                         ],
                       ),
@@ -405,22 +411,30 @@ class _QuickActionButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
         decoration: BoxDecoration(
           color: color.withOpacity(0.1),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, size: 32, color: color),
             const SizedBox(height: 8),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: color,
+            SizedBox(
+              height: 32,
+              child: Center(
+                child: Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: color,
+                    height: 1.3,
+                  ),
+                ),
               ),
             ),
           ],

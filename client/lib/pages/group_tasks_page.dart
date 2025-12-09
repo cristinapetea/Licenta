@@ -310,6 +310,8 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
               onPressed: () => Navigator.pop(dialogContext),
               child: const Text('Cancel'),
             ),
+            // În _showCreateTaskDialog(), înlocuiește secțiunea unde se construiește body-ul:
+
             ElevatedButton(
               onPressed: () async {
                 if (titleCtrl.text.trim().isEmpty) return;
@@ -325,7 +327,16 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                 if (selectedMember != null && selectedMember!.isNotEmpty) {
                   body['assignedTo'] = selectedMember!;
                 }
-                if (selectedDate != null) body['dueDate'] = selectedDate!.toIso8601String();
+                
+                // FIX: Trimite data în format local, nu UTC
+                if (selectedDate != null) {
+                  // Formatul: YYYY-MM-DD (fără timezone conversion)
+                  final year = selectedDate!.year.toString();
+                  final month = selectedDate!.month.toString().padLeft(2, '0');
+                  final day = selectedDate!.day.toString().padLeft(2, '0');
+                  body['dueDate'] = '$year-$month-$day';
+                }
+                
                 if (selectedTime != null) {
                   body['dueTime'] = '${selectedTime!.hour}:${selectedTime!.minute.toString().padLeft(2, '0')}';
                 }
