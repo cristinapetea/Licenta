@@ -1,0 +1,811 @@
+{
+  "generatedAt": "2025-12-09T14:27:19.472Z",
+  "householdId": "691a1acbcc1ce7336613116d",
+  "analysis": [
+    {
+      "memberId": "6920193f50d36a96cf1350a2",
+      "memberName": "Cristina",
+      "totalTasks": 215,
+      "totalCompleted": 186,
+      "overallCompletionRate": 87,
+      "top3Strengths": [
+        {
+          "category": "lunch",
+          "displayName": "Cooking lunch",
+          "score": 93.4,
+          "totalTasks": 20,
+          "completed": 20,
+          "completionRate": 100,
+          "onTime": 16,
+          "onTimeRate": 80
+        },
+        {
+          "category": "dinner",
+          "displayName": "Cooking dinner",
+          "score": 88.4,
+          "totalTasks": 30,
+          "completed": 27,
+          "completionRate": 90,
+          "onTime": 21,
+          "onTimeRate": 78
+        },
+        {
+          "category": "dishwasher_start",
+          "displayName": "Starting dishwasher",
+          "score": 88,
+          "totalTasks": 21,
+          "completed": 18,
+          "completionRate": 86,
+          "onTime": 15,
+          "onTimeRate": 83
+        }
+      ],
+      "allCategories": [
+        {
+          "category": "lunch",
+          "displayName": "Cooking lunch",
+          "score": 93.4,
+          "totalTasks": 20,
+          "completed": 20,
+          "completionRate": 100,
+          "onTime": 16,
+          "onTimeRate": 80
+        },
+        {
+          "category": "dinner",
+          "displayName": "Cooking dinner",
+          "score": 88.4,
+          "totalTasks": 30,
+          "completed": 27,
+          "completionRate": 90,
+          "onTime": 21,
+          "onTimeRate": 78
+        },
+        {
+          "category": "dishwasher_start",
+          "displayName": "Starting dishwasher",
+          "score": 88,
+          "totalTasks": 21,
+          "completed": 18,
+          "completionRate": 86,
+          "onTime": 15,
+          "onTimeRate": 83
+        },
+        {
+          "category": "breakfast",
+          "displayName": "Preparing breakfast",
+          "score": 87.2,
+          "totalTasks": 16,
+          "completed": 13,
+          "completionRate": 81,
+          "onTime": 11,
+          "onTimeRate": 85
+        },
+        {
+          "category": "dishwasher_unload",
+          "displayName": "Unloading dishwasher",
+          "score": 86.7,
+          "totalTasks": 31,
+          "completed": 27,
+          "completionRate": 87,
+          "onTime": 21,
+          "onTimeRate": 78
+        },
+        {
+          "category": "laundry_hang",
+          "displayName": "Hanging laundry",
+          "score": 86.3,
+          "totalTasks": 16,
+          "completed": 13,
+          "completionRate": 81,
+          "onTime": 11,
+          "onTimeRate": 85
+        },
+        {
+          "category": "bathroom",
+          "displayName": "Cleaning bathroom",
+          "score": 85.7,
+          "totalTasks": 4,
+          "completed": 4,
+          "completionRate": 100,
+          "onTime": 4,
+          "onTimeRate": 100
+        },
+        {
+          "category": "shopping",
+          "displayName": "Shopping",
+          "score": 82,
+          "totalTasks": 10,
+          "completed": 10,
+          "completionRate": 100,
+          "onTime": 8,
+          "onTimeRate": 80
+        },
+        {
+          "category": "trash",
+          "displayName": "Taking out trash",
+          "score": 79.7,
+          "totalTasks": 39,
+          "completed": 32,
+          "completionRate": 82,
+          "onTime": 21,
+          "onTimeRate": 66
+        },
+        {
+          "category": "dust",
+          "displayName": "Dusting",
+          "score": 77,
+          "totalTasks": 5,
+          "completed": 4,
+          "completionRate": 80,
+          "onTime": 4,
+          "onTimeRate": 100
+        },
+        {
+          "category": "laundry_start",
+          "displayName": "Starting laundry",
+          "score": 74,
+          "totalTasks": 17,
+          "completed": 13,
+          "completionRate": 76,
+          "onTime": 8,
+          "onTimeRate": 62
+        },
+        {
+          "category": "vacuum",
+          "displayName": "Vacuuming",
+          "score": 60.4,
+          "totalTasks": 6,
+          "completed": 5,
+          "completionRate": 83,
+          "onTime": 3,
+          "onTimeRate": 60
+        }
+      ]
+    },
+    {
+      "memberId": "690f620c49406f5fdb91194f",
+      "memberName": "Ade",
+      "totalTasks": 250,
+      "totalCompleted": 212,
+      "overallCompletionRate": 85,
+      "top3Strengths": [
+        {
+          "category": "lunch",
+          "displayName": "Cooking lunch",
+          "score": 88.1,
+          "totalTasks": 19,
+          "completed": 17,
+          "completionRate": 89,
+          "onTime": 13,
+          "onTimeRate": 76
+        },
+        {
+          "category": "dust",
+          "displayName": "Dusting",
+          "score": 85.9,
+          "totalTasks": 4,
+          "completed": 4,
+          "completionRate": 100,
+          "onTime": 4,
+          "onTimeRate": 100
+        },
+        {
+          "category": "dishwasher_unload",
+          "displayName": "Unloading dishwasher",
+          "score": 85.6,
+          "totalTasks": 23,
+          "completed": 20,
+          "completionRate": 87,
+          "onTime": 15,
+          "onTimeRate": 75
+        }
+      ],
+      "allCategories": [
+        {
+          "category": "lunch",
+          "displayName": "Cooking lunch",
+          "score": 88.1,
+          "totalTasks": 19,
+          "completed": 17,
+          "completionRate": 89,
+          "onTime": 13,
+          "onTimeRate": 76
+        },
+        {
+          "category": "dust",
+          "displayName": "Dusting",
+          "score": 85.9,
+          "totalTasks": 4,
+          "completed": 4,
+          "completionRate": 100,
+          "onTime": 4,
+          "onTimeRate": 100
+        },
+        {
+          "category": "dishwasher_unload",
+          "displayName": "Unloading dishwasher",
+          "score": 85.6,
+          "totalTasks": 23,
+          "completed": 20,
+          "completionRate": 87,
+          "onTime": 15,
+          "onTimeRate": 75
+        },
+        {
+          "category": "dishwasher_start",
+          "displayName": "Starting dishwasher",
+          "score": 85.4,
+          "totalTasks": 35,
+          "completed": 31,
+          "completionRate": 89,
+          "onTime": 22,
+          "onTimeRate": 71
+        },
+        {
+          "category": "laundry_hang",
+          "displayName": "Hanging laundry",
+          "score": 84.9,
+          "totalTasks": 31,
+          "completed": 25,
+          "completionRate": 81,
+          "onTime": 20,
+          "onTimeRate": 80
+        },
+        {
+          "category": "trash",
+          "displayName": "Taking out trash",
+          "score": 84.6,
+          "totalTasks": 36,
+          "completed": 34,
+          "completionRate": 94,
+          "onTime": 22,
+          "onTimeRate": 65
+        },
+        {
+          "category": "breakfast",
+          "displayName": "Preparing breakfast",
+          "score": 81.4,
+          "totalTasks": 20,
+          "completed": 15,
+          "completionRate": 75,
+          "onTime": 11,
+          "onTimeRate": 73
+        },
+        {
+          "category": "laundry_start",
+          "displayName": "Starting laundry",
+          "score": 80.8,
+          "totalTasks": 32,
+          "completed": 28,
+          "completionRate": 88,
+          "onTime": 19,
+          "onTimeRate": 68
+        },
+        {
+          "category": "dinner",
+          "displayName": "Cooking dinner",
+          "score": 76.4,
+          "totalTasks": 24,
+          "completed": 16,
+          "completionRate": 67,
+          "onTime": 11,
+          "onTimeRate": 69
+        },
+        {
+          "category": "bathroom",
+          "displayName": "Cleaning bathroom",
+          "score": 76.4,
+          "totalTasks": 6,
+          "completed": 6,
+          "completionRate": 100,
+          "onTime": 5,
+          "onTimeRate": 83
+        },
+        {
+          "category": "vacuum",
+          "displayName": "Vacuuming",
+          "score": 73.7,
+          "totalTasks": 14,
+          "completed": 12,
+          "completionRate": 86,
+          "onTime": 8,
+          "onTimeRate": 67
+        },
+        {
+          "category": "shopping",
+          "displayName": "Shopping",
+          "score": 70.3,
+          "totalTasks": 6,
+          "completed": 4,
+          "completionRate": 67,
+          "onTime": 4,
+          "onTimeRate": 100
+        }
+      ]
+    },
+    {
+      "memberId": "69382d18adb8854c4b901b1e",
+      "memberName": "Mama",
+      "totalTasks": 223,
+      "totalCompleted": 187,
+      "overallCompletionRate": 84,
+      "top3Strengths": [
+        {
+          "category": "laundry_hang",
+          "displayName": "Hanging laundry",
+          "score": 94.9,
+          "totalTasks": 14,
+          "completed": 14,
+          "completionRate": 100,
+          "onTime": 12,
+          "onTimeRate": 86
+        },
+        {
+          "category": "dinner",
+          "displayName": "Cooking dinner",
+          "score": 91.4,
+          "totalTasks": 21,
+          "completed": 20,
+          "completionRate": 95,
+          "onTime": 16,
+          "onTimeRate": 80
+        },
+        {
+          "category": "laundry_start",
+          "displayName": "Starting laundry",
+          "score": 88.9,
+          "totalTasks": 23,
+          "completed": 21,
+          "completionRate": 91,
+          "onTime": 19,
+          "onTimeRate": 90
+        }
+      ],
+      "allCategories": [
+        {
+          "category": "laundry_hang",
+          "displayName": "Hanging laundry",
+          "score": 94.9,
+          "totalTasks": 14,
+          "completed": 14,
+          "completionRate": 100,
+          "onTime": 12,
+          "onTimeRate": 86
+        },
+        {
+          "category": "dinner",
+          "displayName": "Cooking dinner",
+          "score": 91.4,
+          "totalTasks": 21,
+          "completed": 20,
+          "completionRate": 95,
+          "onTime": 16,
+          "onTimeRate": 80
+        },
+        {
+          "category": "laundry_start",
+          "displayName": "Starting laundry",
+          "score": 88.9,
+          "totalTasks": 23,
+          "completed": 21,
+          "completionRate": 91,
+          "onTime": 19,
+          "onTimeRate": 90
+        },
+        {
+          "category": "breakfast",
+          "displayName": "Preparing breakfast",
+          "score": 88.5,
+          "totalTasks": 14,
+          "completed": 12,
+          "completionRate": 86,
+          "onTime": 10,
+          "onTimeRate": 83
+        },
+        {
+          "category": "bathroom",
+          "displayName": "Cleaning bathroom",
+          "score": 86.2,
+          "totalTasks": 4,
+          "completed": 4,
+          "completionRate": 100,
+          "onTime": 4,
+          "onTimeRate": 100
+        },
+        {
+          "category": "dishwasher_unload",
+          "displayName": "Unloading dishwasher",
+          "score": 83.4,
+          "totalTasks": 27,
+          "completed": 23,
+          "completionRate": 85,
+          "onTime": 16,
+          "onTimeRate": 70
+        },
+        {
+          "category": "trash",
+          "displayName": "Taking out trash",
+          "score": 81.5,
+          "totalTasks": 40,
+          "completed": 33,
+          "completionRate": 83,
+          "onTime": 23,
+          "onTimeRate": 70
+        },
+        {
+          "category": "lunch",
+          "displayName": "Cooking lunch",
+          "score": 81.3,
+          "totalTasks": 23,
+          "completed": 17,
+          "completionRate": 74,
+          "onTime": 13,
+          "onTimeRate": 76
+        },
+        {
+          "category": "dishwasher_start",
+          "displayName": "Starting dishwasher",
+          "score": 81.2,
+          "totalTasks": 30,
+          "completed": 23,
+          "completionRate": 77,
+          "onTime": 17,
+          "onTimeRate": 74
+        },
+        {
+          "category": "shopping",
+          "displayName": "Shopping",
+          "score": 74.9,
+          "totalTasks": 9,
+          "completed": 8,
+          "completionRate": 89,
+          "onTime": 5,
+          "onTimeRate": 63
+        },
+        {
+          "category": "dust",
+          "displayName": "Dusting",
+          "score": 69.2,
+          "totalTasks": 9,
+          "completed": 7,
+          "completionRate": 78,
+          "onTime": 5,
+          "onTimeRate": 71
+        },
+        {
+          "category": "vacuum",
+          "displayName": "Vacuuming",
+          "score": 67,
+          "totalTasks": 9,
+          "completed": 5,
+          "completionRate": 56,
+          "onTime": 5,
+          "onTimeRate": 100
+        }
+      ]
+    },
+    {
+      "memberId": "690f64daebc822ee9f473db3",
+      "memberName": "Denisa",
+      "totalTasks": 219,
+      "totalCompleted": 181,
+      "overallCompletionRate": 83,
+      "top3Strengths": [
+        {
+          "category": "laundry_hang",
+          "displayName": "Hanging laundry",
+          "score": 86.3,
+          "totalTasks": 24,
+          "completed": 20,
+          "completionRate": 83,
+          "onTime": 16,
+          "onTimeRate": 80
+        },
+        {
+          "category": "breakfast",
+          "displayName": "Preparing breakfast",
+          "score": 85.8,
+          "totalTasks": 13,
+          "completed": 13,
+          "completionRate": 100,
+          "onTime": 7,
+          "onTimeRate": 54
+        },
+        {
+          "category": "dishwasher_unload",
+          "displayName": "Unloading dishwasher",
+          "score": 84.7,
+          "totalTasks": 27,
+          "completed": 25,
+          "completionRate": 93,
+          "onTime": 16,
+          "onTimeRate": 64
+        }
+      ],
+      "allCategories": [
+        {
+          "category": "laundry_hang",
+          "displayName": "Hanging laundry",
+          "score": 86.3,
+          "totalTasks": 24,
+          "completed": 20,
+          "completionRate": 83,
+          "onTime": 16,
+          "onTimeRate": 80
+        },
+        {
+          "category": "breakfast",
+          "displayName": "Preparing breakfast",
+          "score": 85.8,
+          "totalTasks": 13,
+          "completed": 13,
+          "completionRate": 100,
+          "onTime": 7,
+          "onTimeRate": 54
+        },
+        {
+          "category": "dishwasher_unload",
+          "displayName": "Unloading dishwasher",
+          "score": 84.7,
+          "totalTasks": 27,
+          "completed": 25,
+          "completionRate": 93,
+          "onTime": 16,
+          "onTimeRate": 64
+        },
+        {
+          "category": "trash",
+          "displayName": "Taking out trash",
+          "score": 83.6,
+          "totalTasks": 30,
+          "completed": 25,
+          "completionRate": 83,
+          "onTime": 19,
+          "onTimeRate": 76
+        },
+        {
+          "category": "dust",
+          "displayName": "Dusting",
+          "score": 82.5,
+          "totalTasks": 4,
+          "completed": 4,
+          "completionRate": 100,
+          "onTime": 4,
+          "onTimeRate": 100
+        },
+        {
+          "category": "shopping",
+          "displayName": "Shopping",
+          "score": 81.3,
+          "totalTasks": 17,
+          "completed": 14,
+          "completionRate": 82,
+          "onTime": 12,
+          "onTimeRate": 86
+        },
+        {
+          "category": "dinner",
+          "displayName": "Cooking dinner",
+          "score": 79.8,
+          "totalTasks": 25,
+          "completed": 19,
+          "completionRate": 76,
+          "onTime": 13,
+          "onTimeRate": 68
+        },
+        {
+          "category": "lunch",
+          "displayName": "Cooking lunch",
+          "score": 79.5,
+          "totalTasks": 28,
+          "completed": 20,
+          "completionRate": 71,
+          "onTime": 15,
+          "onTimeRate": 75
+        },
+        {
+          "category": "laundry_start",
+          "displayName": "Starting laundry",
+          "score": 77.8,
+          "totalTasks": 15,
+          "completed": 13,
+          "completionRate": 87,
+          "onTime": 8,
+          "onTimeRate": 62
+        },
+        {
+          "category": "bathroom",
+          "displayName": "Cleaning bathroom",
+          "score": 76,
+          "totalTasks": 4,
+          "completed": 4,
+          "completionRate": 100,
+          "onTime": 3,
+          "onTimeRate": 75
+        },
+        {
+          "category": "dishwasher_start",
+          "displayName": "Starting dishwasher",
+          "score": 74.9,
+          "totalTasks": 22,
+          "completed": 15,
+          "completionRate": 68,
+          "onTime": 10,
+          "onTimeRate": 67
+        },
+        {
+          "category": "vacuum",
+          "displayName": "Vacuuming",
+          "score": 64.2,
+          "totalTasks": 10,
+          "completed": 9,
+          "completionRate": 90,
+          "onTime": 5,
+          "onTimeRate": 56
+        }
+      ]
+    },
+    {
+      "memberId": "69382d9eadb8854c4b901b47",
+      "memberName": "Tata",
+      "totalTasks": 212,
+      "totalCompleted": 167,
+      "overallCompletionRate": 79,
+      "top3Strengths": [
+        {
+          "category": "laundry_hang",
+          "displayName": "Hanging laundry",
+          "score": 93.1,
+          "totalTasks": 19,
+          "completed": 17,
+          "completionRate": 89,
+          "onTime": 16,
+          "onTimeRate": 94
+        },
+        {
+          "category": "trash",
+          "displayName": "Taking out trash",
+          "score": 88.9,
+          "totalTasks": 37,
+          "completed": 33,
+          "completionRate": 89,
+          "onTime": 28,
+          "onTimeRate": 85
+        },
+        {
+          "category": "breakfast",
+          "displayName": "Preparing breakfast",
+          "score": 88,
+          "totalTasks": 14,
+          "completed": 11,
+          "completionRate": 79,
+          "onTime": 10,
+          "onTimeRate": 91
+        }
+      ],
+      "allCategories": [
+        {
+          "category": "laundry_hang",
+          "displayName": "Hanging laundry",
+          "score": 93.1,
+          "totalTasks": 19,
+          "completed": 17,
+          "completionRate": 89,
+          "onTime": 16,
+          "onTimeRate": 94
+        },
+        {
+          "category": "trash",
+          "displayName": "Taking out trash",
+          "score": 88.9,
+          "totalTasks": 37,
+          "completed": 33,
+          "completionRate": 89,
+          "onTime": 28,
+          "onTimeRate": 85
+        },
+        {
+          "category": "breakfast",
+          "displayName": "Preparing breakfast",
+          "score": 88,
+          "totalTasks": 14,
+          "completed": 11,
+          "completionRate": 79,
+          "onTime": 10,
+          "onTimeRate": 91
+        },
+        {
+          "category": "lunch",
+          "displayName": "Cooking lunch",
+          "score": 83.3,
+          "totalTasks": 14,
+          "completed": 12,
+          "completionRate": 86,
+          "onTime": 8,
+          "onTimeRate": 67
+        },
+        {
+          "category": "dishwasher_unload",
+          "displayName": "Unloading dishwasher",
+          "score": 82.8,
+          "totalTasks": 24,
+          "completed": 18,
+          "completionRate": 75,
+          "onTime": 15,
+          "onTimeRate": 83
+        },
+        {
+          "category": "dishwasher_start",
+          "displayName": "Starting dishwasher",
+          "score": 80.7,
+          "totalTasks": 25,
+          "completed": 18,
+          "completionRate": 72,
+          "onTime": 14,
+          "onTimeRate": 78
+        },
+        {
+          "category": "bathroom",
+          "displayName": "Cleaning bathroom",
+          "score": 79,
+          "totalTasks": 4,
+          "completed": 4,
+          "completionRate": 100,
+          "onTime": 3,
+          "onTimeRate": 75
+        },
+        {
+          "category": "laundry_start",
+          "displayName": "Starting laundry",
+          "score": 75.9,
+          "totalTasks": 17,
+          "completed": 14,
+          "completionRate": 82,
+          "onTime": 9,
+          "onTimeRate": 64
+        },
+        {
+          "category": "dinner",
+          "displayName": "Cooking dinner",
+          "score": 73,
+          "totalTasks": 29,
+          "completed": 19,
+          "completionRate": 66,
+          "onTime": 11,
+          "onTimeRate": 58
+        },
+        {
+          "category": "vacuum",
+          "displayName": "Vacuuming",
+          "score": 70.2,
+          "totalTasks": 13,
+          "completed": 9,
+          "completionRate": 69,
+          "onTime": 7,
+          "onTimeRate": 78
+        },
+        {
+          "category": "dust",
+          "displayName": "Dusting",
+          "score": 68.6,
+          "totalTasks": 6,
+          "completed": 5,
+          "completionRate": 83,
+          "onTime": 4,
+          "onTimeRate": 80
+        },
+        {
+          "category": "shopping",
+          "displayName": "Shopping",
+          "score": 65,
+          "totalTasks": 10,
+          "completed": 7,
+          "completionRate": 70,
+          "onTime": 4,
+          "onTimeRate": 57
+        }
+      ]
+    }
+  ]
+}

@@ -5,6 +5,7 @@ import '../api.dart';
 import 'profile_page.dart';
 import 'group_tasks_page.dart';
 import 'personal_tasks_page.dart';
+import 'ranking_page.dart'; // ADD THIS IMPORT
 
 class HomePage extends StatefulWidget {
   final String? userId;
@@ -15,8 +16,6 @@ class HomePage extends StatefulWidget {
   @override
   State<HomePage> createState() => _HomePageState();
 }
-
-
 
 class _HomePageState extends State<HomePage> {
   String? _userId;
@@ -95,7 +94,6 @@ class _HomePageState extends State<HomePage> {
     if (_userId == null) return;
 
     if (index == 1 && _householdId != null) {
-      // Group Tasks tab
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -105,9 +103,8 @@ class _HomePageState extends State<HomePage> {
             householdName: _householdName,
           ),
         ),
-      ).then((_) => _loadStats()); // Refresh stats when you return
+      ).then((_) => _loadStats());
     } else if (index == 2) {
-      // Personal Tasks tab
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -115,7 +112,6 @@ class _HomePageState extends State<HomePage> {
         ),
       ).then((_) => _loadStats());
     } else if (index == 3) {
-      // Profile tab
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -243,6 +239,25 @@ class _HomePageState extends State<HomePage> {
                             label: 'Personal\nTasks',
                             color: palePurple,
                             onTap: () => _onTabTapped(2),
+                          ),
+                          // NEW: Ranking button
+                          _QuickActionButton(
+                            icon: Icons.emoji_events,
+                            label: 'Ranking',
+                            color: const Color(0xFFFFD700),
+                            onTap: () {
+                              if (_householdId != null) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => RankingPage(
+                                      userId: _userId!,
+                                      householdId: _householdId!,
+                                    ),
+                                  ),
+                                );
+                              }
+                            },
                           ),
                         ],
                       ),
