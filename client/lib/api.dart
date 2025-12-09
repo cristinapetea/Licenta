@@ -16,10 +16,9 @@ class Api {
 */
 
 class Api {
-  // DOAR host + port aici (fără /api)
   static String get base {
     if (kIsWeb) return 'http://localhost:3000';
-    if (Platform.isAndroid) return 'http://192.168.1.5:3000'; // ← Laptop-ul meu cu ipconfig
-    return 'http://192.168.1.5:3000'; 
+    if (Platform.isAndroid) return 'http://192.168.1.2:3000'; //  ipconfig
+    return 'http://192.168.1.2:3000'; 
   }
 }

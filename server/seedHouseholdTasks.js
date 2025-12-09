@@ -17,7 +17,9 @@ const HOUSEHOLD_ID = '691a1acbcc1ce7336613116d';
 const USER_IDS = {
   ade: '690f620c49406f5fdb91194f',
   denisa: '690f64daebc822ee9f473db3',
-  cristina: '6920193f50d36a96cf1350a2'
+  cristina: '6920193f50d36a96cf1350a2',
+  mama: '69382d18adb8854c4b901b1e',
+  tata: '69382d9eadb8854c4b901b47'
 };
 
 // Task definitions with realistic weekly frequency
@@ -149,7 +151,9 @@ const TASK_TYPES = {
 const MEMBERS = [
   { id: USER_IDS.ade, name: 'Ade' },
   { id: USER_IDS.denisa, name: 'Denisa' },
-  { id: USER_IDS.cristina, name: 'Cristina' }
+  { id: USER_IDS.cristina, name: 'Cristina' },
+  { id: USER_IDS.mama, name: 'Mama' },
+  { id: USER_IDS.tata, name: 'Tata' }
 ];
 
 // ========================================
@@ -199,7 +203,7 @@ function generateCompletionDate(createdAt, deadline, onTime) {
 // Select random member (with realistic variation)
 function selectRandomMember() {
   // You can adjust here to favor one member
-  // Currently 50-50
+  // Currently equal distribution
   return MEMBERS[Math.floor(Math.random() * MEMBERS.length)].id;
 }
 
