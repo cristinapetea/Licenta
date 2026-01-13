@@ -2,10 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'pages/login_page.dart';
 import 'pages/signup_page.dart';
-
 import 'pages/home_page.dart';
-
-
 
 void main() => runApp(const ChoreBuddzApp());
 
@@ -14,9 +11,7 @@ class ChoreBuddzApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-   
-    
-    const palePurple    = Color(0xFFD3B8FF); // mov pal
+    const palePurple    = Color(0xFFD3B8FF);
     const deepIndigo    = Color(0xFF4B4FA7);
 
     return MaterialApp(
@@ -32,13 +27,11 @@ class ChoreBuddzApp extends StatelessWidget {
         useMaterial3: true,
         textTheme: GoogleFonts.poppinsTextTheme(),
       ),
-      // IMPORTANT:
       initialRoute: '/landing',
       routes: {
         '/landing'   : (_) => const LandingPage(),
         '/login'     : (_) => const LoginPage(),
         '/signup'    : (_) => const SignUpPage(),
-        // '/createJoin' removed - now requires userId from login
         '/home'      : (_) => const HomePage(),
       },
     );
@@ -52,12 +45,10 @@ class LandingPage extends StatelessWidget {
   Widget build(BuildContext context) {
     const paleRoyalBlue = Color(0xFF7E9BFF);
     const palePurple    = Color(0xFFD3B8FF);
-    const deepIndigo    = Color(0xFF4B4FA7);
 
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
-          // gradient albastru pal + mov pal
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -66,7 +57,7 @@ class LandingPage extends StatelessWidget {
         ),
         child: Stack(
           children: [
-            // Bule decorative translucide
+            // Bule decorative
             Positioned(
               top: -60, left: -40,
               child: _Blob(size: 180, color: Colors.white24),
@@ -83,10 +74,10 @@ class LandingPage extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Logo rotund cu mătură stilizată
+                      // Logo cu familia
                       Container(
-                        width: 120,
-                        height: 120,
+                        width: 140,
+                        height: 140,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           boxShadow: [
@@ -103,11 +94,7 @@ class LandingPage extends StatelessWidget {
                           ),
                         ),
                         child: CustomPaint(
-                          painter: _BroomPainter(
-                            handleColor: deepIndigo,
-                            strawColor: const Color(0xFFFFC97A),
-                            bandColor: const Color(0xFF8A7CCF),
-                          ),
+                          painter: _FamilyLogoPainter(),
                         ),
                       ),
                       const SizedBox(height: 28),
@@ -137,11 +124,7 @@ class LandingPage extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 36),
-                      // Butoane CTA
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          _PrimaryButton(
+                      _PrimaryButton(
                         label: 'Let the cleaning begin!',
                         onPressed: () {
                           Navigator.push(
@@ -149,10 +132,6 @@ class LandingPage extends StatelessWidget {
                             MaterialPageRoute(builder: (_) => const LoginPage()),
                           );
                         },
-                      ),
-
-                          
-                        ],
                       ),
                     ],
                   ),
@@ -166,7 +145,6 @@ class LandingPage extends StatelessWidget {
   }
 }
 
-/// bulă decorativă
 class _Blob extends StatelessWidget {
   final double size;
   final Color color;
@@ -191,7 +169,6 @@ class _Blob extends StatelessWidget {
   }
 }
 
-/// buton primar
 class _PrimaryButton extends StatelessWidget {
   final String label;
   final VoidCallback onPressed;
@@ -211,115 +188,151 @@ class _PrimaryButton extends StatelessWidget {
   }
 }
 
-/// buton conturat alb (ghost)
-class _GhostButton extends StatelessWidget {
-  final String label;
-  final VoidCallback onPressed;
-  const _GhostButton({required this.label, required this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return OutlinedButton(
-      style: OutlinedButton.styleFrom(
-        side: const BorderSide(color: Colors.white, width: 1.4),
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      ),
-      onPressed: onPressed,
-      child: Text(label, style: const TextStyle(fontSize: 16)),
-    );
-  }
-}
-
-/// Logo – mătură desenată vectorial
-class _BroomPainter extends CustomPainter {
-  final Color handleColor;
-  final Color strawColor;
-  final Color bandColor;
-
-  _BroomPainter({
-    required this.handleColor,
-    required this.strawColor,
-    required this.bandColor,
-  });
-
+/// Logo cu mătură și flori maturate
+class _FamilyLogoPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width;
     final h = size.height;
-
-    // centru și scalare
     final cx = w / 2;
     final cy = h / 2;
 
-    // mâner
-    final handlePaint = Paint()
-      ..color = handleColor
-      ..strokeWidth = w * 0.06
-      ..strokeCap = StrokeCap.round;
+    // Culori
+    const handleColor = Color(0xFF8B6F47);  // maro pentru mâner
+    const bristleColor = Color(0xFFFFD700); // galben auriu pentru paie
+    const flowerColors = [
+      Color(0xFFFF9AA2), // roz
+      Color(0xFFFFDAB9), // piersică
+      Color(0xFFB5EAD7), // mint
+      Color(0xFFC7CEEA), // lavandă
+    ];
 
-    // înclinăm puțin mătura
+    // Desenăm florile maturate jos
+    _drawFlowers(canvas, Offset(cx - w * 0.18, cy + h * 0.25), flowerColors, w * 0.08);
+    _drawFlowers(canvas, Offset(cx + w * 0.15, cy + h * 0.28), flowerColors, w * 0.07);
+    _drawFlowers(canvas, Offset(cx - w * 0.05, cy + h * 0.30), flowerColors, w * 0.06);
+
+    // Desenăm mătura
     canvas.save();
     canvas.translate(cx, cy);
-    canvas.rotate(-0.35);
+    canvas.rotate(-0.3); // înclinare ușoară
     canvas.translate(-cx, -cy);
 
-    // mânerul (o linie lungă)
+    // Mânerul măturii - mai subțire și mai elegant
+    final handlePaint = Paint()
+      ..color = handleColor
+      ..strokeWidth = w * 0.04
+      ..strokeCap = StrokeCap.round;
+
     canvas.drawLine(
-      Offset(cx - w * 0.25, cy - h * 0.30),
-      Offset(cx + w * 0.35, cy + h * 0.20),
+      Offset(cx - w * 0.15, cy - h * 0.25),
+      Offset(cx + w * 0.20, cy + h * 0.15),
       handlePaint,
     );
 
-    // capătul de paie
-    final headWidth = w * 0.42;
-    final headHeight = h * 0.22;
-    final headRect = Rect.fromCenter(
-      center: Offset(cx + w * 0.30, cy + h * 0.22),
-      width: headWidth,
-      height: headHeight,
-    );
-
-    // corp paie (oval)
-    final headPaint = Paint()..color = strawColor;
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(headRect, Radius.circular(w * 0.10)),
-      headPaint,
-    );
-
-    // bandă
-    final bandPaint = Paint()..color = bandColor;
-    final bandRect = Rect.fromLTWH(
-      headRect.left + headWidth * 0.05,
-      headRect.top + headHeight * 0.32,
-      headWidth * 0.90,
-      headHeight * 0.22,
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(bandRect, Radius.circular(w * 0.05)),
-      bandPaint,
-    );
-
-    // câteva fire (bristles)
+    // Capul de paie stufoase
+    final bristleStartX = cx + w * 0.15;
+    final bristleStartY = cy + h * 0.12;
+    
     final bristlePaint = Paint()
-      ..color = Colors.brown.withOpacity(0.55)
-      ..strokeWidth = 2
+      ..color = bristleColor
       ..strokeCap = StrokeCap.round;
 
-    for (int i = 0; i < 7; i++) {
-      final t = i / 6.0;
-      final x = headRect.left + headWidth * t;
+    // Paiele individuale pentru efect stufoasa
+    for (int i = 0; i < 25; i++) {
+      final angle = -0.6 + (i / 24.0) * 1.2; // spread de la -0.6 la 0.6 radiani
+      final length = w * 0.12 + (i % 3) * w * 0.015; // lungimi variate
+      final thickness = w * 0.008 - (i % 2) * w * 0.002;
+      
+      bristlePaint.strokeWidth = thickness;
+      
+      final endX = bristleStartX + length * Math.cos(angle);
+      final endY = bristleStartY + length * Math.sin(angle);
+      
       canvas.drawLine(
-        Offset(x, headRect.bottom - 4),
-        Offset(x + 6 * (t - 0.5), headRect.bottom + 10),
+        Offset(bristleStartX, bristleStartY),
+        Offset(endX, endY),
         bristlePaint,
       );
     }
 
+    // Banda care leagă paiele
+    final bandPaint = Paint()..color = const Color(0xFF4B4FA7);
+    final bandRect = RRect.fromRectAndRadius(
+      Rect.fromCenter(
+        center: Offset(bristleStartX, bristleStartY),
+        width: w * 0.15,
+        height: w * 0.05,
+      ),
+      Radius.circular(w * 0.025),
+    );
+    canvas.drawRRect(bandRect, bandPaint);
+
     canvas.restore();
   }
 
+  void _drawFlowers(Canvas canvas, Offset center, List<Color> colors, double size) {
+    // Desenăm 2-3 floricele grupate
+    final numFlowers = 2 + (center.dx.toInt() % 2);
+    
+    for (int i = 0; i < numFlowers; i++) {
+      final offsetX = (i - 1) * size * 0.6;
+      final flowerCenter = Offset(center.dx + offsetX, center.dy);
+      final color = colors[i % colors.length];
+      
+      // Petalele (5 petale)
+      final petalPaint = Paint()..color = color;
+      
+      for (int p = 0; p < 5; p++) {
+        final angle = (p * 2 * Math.pi / 5) - Math.pi / 2;
+        final petalX = flowerCenter.dx + size * 0.3 * Math.cos(angle);
+        final petalY = flowerCenter.dy + size * 0.3 * Math.sin(angle);
+        
+        canvas.drawCircle(Offset(petalX, petalY), size * 0.2, petalPaint);
+      }
+      
+      // Centrul florii
+      final centerPaint = Paint()..color = const Color(0xFFFFD700);
+      canvas.drawCircle(flowerCenter, size * 0.15, centerPaint);
+    }
+  }
+
   @override
-  bool shouldRepaint(covariant _BroomPainter old) => false;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// Helper class pentru Math
+class Math {
+  static const double pi = 3.14159265359;
+  
+  static double cos(double radians) {
+    return _cos(radians);
+  }
+  
+  static double sin(double radians) {
+    return _sin(radians);
+  }
+  
+  static double _cos(double x) {
+    // Taylor series approximation
+    x = x % (2 * pi);
+    double result = 1;
+    double term = 1;
+    for (int i = 1; i <= 10; i++) {
+      term *= -x * x / ((2 * i - 1) * (2 * i));
+      result += term;
+    }
+    return result;
+  }
+  
+  static double _sin(double x) {
+    x = x % (2 * pi);
+    double result = x;
+    double term = x;
+    for (int i = 1; i <= 10; i++) {
+      term *= -x * x / ((2 * i) * (2 * i + 1));
+      result += term;
+    }
+    return result;
+  }
 }

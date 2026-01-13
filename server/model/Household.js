@@ -1,4 +1,3 @@
-// server/model/Household.js
 const { Schema, model, Types } = require('mongoose');
 
 const householdSchema = new Schema({

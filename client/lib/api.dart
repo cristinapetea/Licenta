@@ -18,7 +18,7 @@ class Api {
 class Api {
   static String get base {
     if (kIsWeb) return 'http://localhost:3000';
-    if (Platform.isAndroid) return 'http://192.168.1.2:3000'; //  ipconfig
-    return 'http://192.168.1.2:3000'; 
+    if (Platform.isAndroid) return 'http://192.168.1.5:3000'; //  ipconfig
+    return 'http://192.168.1.5:3000'; 
   }
 }

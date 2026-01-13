@@ -6,5 +6,4 @@ const userSchema = new Schema({
   password:  { type: String, required: true } // (hash ulterior)
 }, { timestamps: true });
 
-// al 3-lea argument fixează exact numele colecției: 'Users'
 module.exports = model('User', userSchema, 'Users');

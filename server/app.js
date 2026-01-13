@@ -3,6 +3,9 @@ const cors = require('cors');
 const path = require('path');
 const performanceRoutes = require('./routers/performanceRoutes');
 
+const aiRankingRoutes = require('./routers/aiRankingRoutes');
+
+
 const app = express();
 
 app.use(cors());
@@ -33,5 +36,8 @@ app.use('/api/tasks', require('./routers/task.router')); // ✅ NOU
 
 
 app.use('/api/performance', performanceRoutes);
+
+
+app.use('/api/ai-ranking', aiRankingRoutes);
 
 module.exports = app;
