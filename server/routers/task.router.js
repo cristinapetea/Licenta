@@ -1,10 +1,9 @@
-// server/routers/task.router.js
 const router = require('express').Router();
 const { Types } = require('mongoose');
 const ctrl = require('../controller/task.controller');
 const upload = require('../config/upload');
 
-// middleware identic cu household.router.js
+
 const fakeAuth = (req, res, next) => {
   console.log('fakeAuth middleware - checking x-user header');
   const id = req.headers['x-user'];
@@ -27,7 +26,7 @@ router.get('/', fakeAuth, ctrl.list);
 // GET /api/tasks/stats?householdId=xxx
 router.get('/stats', fakeAuth, ctrl.stats);
 
-// ✅ GET /api/tasks/:id - get single task (TREBUIE SĂ FIE ÎNAINTE DE PATCH)
+// GET /api/tasks/:id - get single task 
 router.get('/:id', fakeAuth, ctrl.getById);
 
 router.get('/performance', fakeAuth, ctrl.performanceStats);

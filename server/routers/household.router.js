@@ -1,9 +1,8 @@
-// server/routers/household.router.js
 const router = require('express').Router();
 const { Types } = require('mongoose');
 const ctrl = require('../controller/household.controller');
 
-// middleware demo: citește userId din header 'x-user' și îl validează
+
 const fakeAuth = (req, res, next) => {
   console.log('fakeAuth middleware - checking x-user header');
   const id = req.headers['x-user'];

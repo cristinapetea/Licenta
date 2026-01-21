@@ -1,4 +1,3 @@
-// client/lib/pages/shopping_list_page.dart
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -203,13 +202,13 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
             _itemController.text = result.recognizedWords;
           });
           
-          // When the user finishes speaking
+          
           if (result.finalResult) {
             _addItem(_itemController.text);
             _stopListening();
           }
         },
-        localeId: 'ro_RO', // Romanian
+        localeId: 'ro_RO', 
       );
     } else {
       if (mounted) {

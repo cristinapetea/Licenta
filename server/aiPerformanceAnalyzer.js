@@ -1,6 +1,3 @@
-// aiPerformanceAnalyzer.js
-// Analyze household member performance and identify top 3 tasks for each member
-// Run with: node aiPerformanceAnalyzer.js
 
 require('dotenv').config();
 const mongoose = require('mongoose');
@@ -9,12 +6,10 @@ const Task = require('./model/Task');
 const User = require('./model/User');
 const Household = require('./model/Household');
 
-// ========================================
-// CONFIGURATION
-// ========================================
+
 const HOUSEHOLD_ID = '691a1acbcc1ce7336613116d';
 
-// Task type categories for better analysis
+// Task type categories
 const TASK_CATEGORIES = {
   shopping: ['Grocery shopping Lidl', 'Shopping at Kaufland', 'Farmers market', 'Weekly groceries'],
   trash: ['Take out trash', 'Empty trash bins', 'Take out recycling', 'Take out glass'],
@@ -62,18 +57,8 @@ function getCategoryDisplayName(category) {
   return names[category] || category;
 }
 
-// ========================================
-// AI PERFORMANCE SCORING
-// ========================================
 
-/**
- * Calculate performance score for a member on a specific task category
- * Uses multiple weighted metrics:
- * - Completion rate (40%)
- * - On-time rate (30%)
- * - Speed efficiency (20%)
- * - Consistency (10%)
- */
+
 function calculatePerformanceScore(tasks) {
   if (tasks.length === 0) return 0;
 
@@ -89,16 +74,15 @@ function calculatePerformanceScore(tasks) {
     : 0;
   
   // Metric 3: Speed Efficiency (20% weight)
-  // Calculate how quickly tasks are completed relative to deadline
   let speedScore = 0;
   if (completed.length > 0) {
     const speedScores = completed
       .filter(t => t.timeToComplete && t.completedOnTime)
       .map(t => {
-        // Assume deadline is roughly 24-72h, normalize speed
+       
         const hoursToComplete = t.timeToComplete / 60;
-        // Reward faster completion (inverse scale)
-        return Math.max(0, 1 - (hoursToComplete / 48)); // 48h baseline
+      
+        return Math.max(0, 1 - (hoursToComplete / 48)); 
       });
     
     speedScore = speedScores.length > 0
@@ -107,7 +91,6 @@ function calculatePerformanceScore(tasks) {
   }
   
   // Metric 4: Consistency (10% weight)
-  // Check if completion rate is consistent over time (lower variance = better)
   let consistencyScore = 0;
   if (tasks.length >= 4) {
     const chunks = 4;
@@ -122,15 +105,15 @@ function calculatePerformanceScore(tasks) {
       chunkRates.push(chunkCompleted / chunkTasks.length);
     }
     
-    // Calculate variance
+   
     const mean = chunkRates.reduce((a, b) => a + b, 0) / chunkRates.length;
     const variance = chunkRates.reduce((sum, rate) => sum + Math.pow(rate - mean, 2), 0) / chunkRates.length;
     
-    // Lower variance = higher consistency score
+    
     consistencyScore = Math.max(0, 1 - (variance * 2));
   }
   
-  // Weighted final score (0-100)
+  // Weighted final score 
   const finalScore = (
     completionRate * 40 +
     onTimeRate * 30 +
@@ -141,9 +124,7 @@ function calculatePerformanceScore(tasks) {
   return finalScore;
 }
 
-// ========================================
-// ANALYSIS FUNCTIONS
-// ========================================
+
 
 async function analyzeMemberPerformance(memberId, memberName) {
   console.log(`\n📊 Analyzing ${memberName}...`);
@@ -174,7 +155,7 @@ async function analyzeMemberPerformance(memberId, memberName) {
   const categoryScores = [];
   
   for (const [category, tasks] of Object.entries(tasksByCategory)) {
-    if (tasks.length < 3) continue; // Skip categories with too few tasks
+    if (tasks.length < 3) continue; 
     
     const score = calculatePerformanceScore(tasks);
     const completed = tasks.filter(t => t.status === 'completed').length;
@@ -192,10 +173,10 @@ async function analyzeMemberPerformance(memberId, memberName) {
     });
   }
   
-  // Sort by score (descending)
+  
   categoryScores.sort((a, b) => b.score - a.score);
   
-  // Get top 3
+
   const top3 = categoryScores.slice(0, 3);
   
   return {
@@ -213,7 +194,7 @@ async function generateHouseholdRanking() {
   console.log('\n🏆 HOUSEHOLD PERFORMANCE RANKING');
   console.log('=====================================\n');
   
-  // Get all household members
+  
   const household = await Household.findById(HOUSEHOLD_ID).populate('members');
   
   if (!household) {
@@ -223,7 +204,7 @@ async function generateHouseholdRanking() {
   
   const results = [];
   
-  // Analyze each member
+  
   for (const member of household.members) {
     const analysis = await analyzeMemberPerformance(member._id, member.name);
     if (analysis) {
@@ -231,10 +212,10 @@ async function generateHouseholdRanking() {
     }
   }
   
-  // Sort by overall completion rate
+ 
   results.sort((a, b) => b.overallCompletionRate - a.overallCompletionRate);
   
-  // Display results
+  
   console.log('\n📈 OVERALL RANKING:');
   console.log('─────────────────────────────────────\n');
   
@@ -268,7 +249,7 @@ async function generateHouseholdRanking() {
   return results;
 }
 
-// Save analysis to JSON file (optional)
+
 const fs = require('fs');
 
 async function saveAnalysisToFile(results) {
@@ -282,9 +263,6 @@ async function saveAnalysisToFile(results) {
   console.log('\n💾 Analysis saved to: household-performance-analysis.json\n');
 }
 
-// ========================================
-// MAIN
-// ========================================
 
 async function main() {
   try {
@@ -293,17 +271,16 @@ async function main() {
     const mongoUri = process.env.MONGO_URI || process.env.MONGODB_URI;
     
     if (!mongoUri) {
-      console.error('❌ ERROR: MONGO_URI not found in .env file!');
+      console.error('ERROR: MONGO_URI not found in .env file!');
       process.exit(1);
     }
     
     await mongoose.connect(mongoUri);
     console.log('✅ Connected to MongoDB');
     
-    // Run analysis
+   
     const results = await generateHouseholdRanking();
     
-    // Save to file
     if (results && results.length > 0) {
       await saveAnalysisToFile(results);
     }
@@ -319,5 +296,5 @@ async function main() {
   }
 }
 
-// Run
+
 main();

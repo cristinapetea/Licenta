@@ -300,7 +300,7 @@ class _CreateJoinPageState extends State<CreateJoinPage>
                           ),
                         ),
 
-                        // ===== JOIN TAB (layout-ul tău original) =====
+                        
                         SingleChildScrollView(
                           padding: const EdgeInsets.all(20),
                           child: Card(

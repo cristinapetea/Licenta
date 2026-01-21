@@ -10,12 +10,10 @@ const Task = require('./model/Task');
 const User = require('./model/User');
 const Household = require('./model/Household');
 
-// ========================================
-// CONFIGURATION
-// ========================================
+
 const HOUSEHOLD_ID = '691a1acbcc1ce7336613116d';
 const USER_IDS = {
-  ade: '690f620c49406f5fdb91194f',
+  ade: '696e6e91d371ce08b61e7588',
   denisa: '690f64daebc822ee9f473db3',
   cristina: '6920193f50d36a96cf1350a2',
   mama: '69382d18adb8854c4b901b1e',

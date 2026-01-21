@@ -57,7 +57,7 @@ class LandingPage extends StatelessWidget {
         ),
         child: Stack(
           children: [
-            // Bule decorative
+           
             Positioned(
               top: -60, left: -40,
               child: _Blob(size: 180, color: Colors.white24),
@@ -66,7 +66,7 @@ class LandingPage extends StatelessWidget {
               bottom: -50, right: -30,
               child: _Blob(size: 220, color: Colors.white30),
             ),
-            // Conținutul principal
+            
             SafeArea(
               child: Center(
                 child: Padding(
@@ -74,7 +74,7 @@ class LandingPage extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Logo cu familia
+                      // Logo
                       Container(
                         width: 140,
                         height: 140,

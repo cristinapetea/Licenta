@@ -1,9 +1,9 @@
-// server/controller/task.controller.js
 const Task = require('../model/Task');
 const Household = require('../model/Household');
 const { Types } = require('mongoose');
 
-// CREATE - Crează task nou (grup sau personal)
+
+//CREATE
 exports.create = async (req, res) => {
   try {
     console.log('=== CREATE TASK DEBUG ===');
@@ -40,13 +40,13 @@ exports.create = async (req, res) => {
       points: points || 0,
     };
     
-    // Task de grup
+    
     if (type === 'group') {
       if (!householdId) {
         return res.status(400).json({ error: 'householdId is required for group tasks' });
       }
       
-      // Verifică că user-ul este membru
+      
       const hh = await Household.findById(householdId);
       if (!hh) {
         return res.status(404).json({ error: 'Household not found' });
@@ -63,7 +63,7 @@ exports.create = async (req, res) => {
       }
     }
     
-    // Task personal
+    
     if (type === 'personal') {
       taskData.category = category;
     }
@@ -80,7 +80,7 @@ exports.create = async (req, res) => {
   }
 };
 
-// GET - Lista task-uri (filtrate după tip și household/owner)
+// GET
 exports.list = async (req, res) => {
   try {
     const userIdStr = req.user?.sub || req.user?.id || req.user;
@@ -129,7 +129,7 @@ exports.list = async (req, res) => {
 
 
 
-// UPDATE - Actualizează task (BLOCHEAZĂ dacă e failed)
+// UPDATE 
 exports.update = async (req, res) => {
   try {
     const userIdStr = req.user?.sub || req.user?.id || req.user;
@@ -146,7 +146,7 @@ exports.update = async (req, res) => {
       return res.status(404).json({ error: 'Task not found' });
     }
     
-    // ❌ BLOCHEAZĂ modificările pentru task-uri failed
+    
     if (task.status === 'failed') {
       return res.status(403).json({ 
         error: 'Cannot modify failed tasks',
@@ -154,7 +154,7 @@ exports.update = async (req, res) => {
       });
     }
     
-    // Verifică permisiuni
+    
     if (task.type === 'personal') {
       if (String(task.owner) !== String(userId)) {
         return res.status(403).json({ error: 'Not authorized' });
@@ -170,12 +170,12 @@ exports.update = async (req, res) => {
       }
     }
     
-    // Update status special pentru complete
+    // Update status 
     if (updates.status === 'completed' && task.status !== 'completed') {
       updates.completedAt = new Date();
       updates.completedBy = userId;
       
-      // Calculează performanța
+      // Performance
       Object.assign(task, updates);
       task.calculatePerformance();
       await task.save();
@@ -208,7 +208,7 @@ exports.update = async (req, res) => {
   }
 };
 
-// UPDATE WITH PHOTO - BLOCHEAZĂ pentru task-uri failed
+// UPDATE WITH PHOTO 
 exports.updateWithPhoto = async (req, res) => {
   try {
     console.log('=== UPDATE WITH PHOTO ===');
@@ -227,7 +227,7 @@ exports.updateWithPhoto = async (req, res) => {
       return res.status(404).json({ error: 'Task not found' });
     }
 
-    // ❌ BLOCHEAZĂ upload de poze pentru task-uri failed
+    
     if (task.status === 'failed') {
       return res.status(403).json({ 
         error: 'Cannot complete failed tasks',
@@ -246,7 +246,7 @@ exports.updateWithPhoto = async (req, res) => {
     task.completedAt = new Date();
     task.completedBy = userId;
     
-    // Calculează performanța
+    
     task.calculatePerformance();
 
     await task.save();
@@ -268,7 +268,7 @@ exports.updateWithPhoto = async (req, res) => {
 };
 
 
-// DELETE - Șterge task
+// DELETE 
 exports.delete = async (req, res) => {
   try {
     const userIdStr = req.user?.sub || req.user?.id || req.user;
@@ -284,7 +284,7 @@ exports.delete = async (req, res) => {
       return res.status(404).json({ error: 'Task not found' });
     }
     
-    // Verifică permisiuni
+    
     if (task.type === 'personal') {
       if (String(task.owner) !== String(userId)) {
         return res.status(403).json({ error: 'Not authorized' });
@@ -308,7 +308,7 @@ exports.delete = async (req, res) => {
   }
 };
 
-// GET stats pentru dashboard
+// GET stats 
 exports.stats = async (req, res) => {
   try {
     const userIdStr = req.user?.sub || req.user?.id || req.user;
@@ -430,7 +430,7 @@ exports.deleteShoppingItem = async (req, res) => {
   }
 };
 
-// Adaugă această funcție în task.controller.js (la sfârșit, după exports.deleteShoppingItem)
+
 
 // GET single task by ID
 exports.getById = async (req, res) => {
@@ -458,7 +458,7 @@ exports.getById = async (req, res) => {
 };
 
 
-// GET performance stats pentru un user
+// GET performance stats 
 exports.performanceStats = async (req, res) => {
   try {
     const userIdStr = req.user?.sub || req.user?.id || req.user;

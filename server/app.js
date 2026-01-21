@@ -2,8 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const performanceRoutes = require('./routers/performanceRoutes');
-
-const aiRankingRoutes = require('./routers/aiRankingRoutes');
+const aiRoutes = require('./routers/aiRoutes');
 
 
 const app = express();
@@ -11,10 +10,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Servește fișiere statice din folderul uploads ✅ 
+
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Logging middleware pentru debugging
+
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
   if (req.body && Object.keys(req.body).length > 0) {
@@ -26,18 +25,18 @@ app.use((req, res, next) => {
   next();
 });
 
-// ✅ healthcheck GET (trebuie să-ți răspundă "ok" în browser)
+
 app.get('/health', (_req, res) => res.send('ok'));
 
-// Rute
+
 app.use('/api/auth', require('./routers/auth.router'));
 app.use('/api/households', require('./routers/household.router'));
-app.use('/api/tasks', require('./routers/task.router')); // ✅ NOU
+app.use('/api/tasks', require('./routers/task.router'));
 
 
 app.use('/api/performance', performanceRoutes);
 
+app.use('/api/ai', aiRoutes);
 
-app.use('/api/ai-ranking', aiRankingRoutes);
 
 module.exports = app;

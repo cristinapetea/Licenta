@@ -52,7 +52,7 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       if (!mounted) return;
-      // Ajustează aici dacă backend-ul tău răspunde cu 200 sau 201
+     
       if (res.statusCode == 200 || res.statusCode == 201) {
         // Parse user data pentru a obține ID-ul real
         final data = jsonDecode(res.body);
@@ -67,7 +67,7 @@ class _LoginPageState extends State<LoginPage> {
           return;
         }
 
-        // Dacă utilizatorul are deja un household, mergi direct la home
+        // Daca utilizatorul are deja un household, merg direct la home
         if (hasHousehold) {
           Navigator.pushReplacement(
             context,
@@ -76,7 +76,7 @@ class _LoginPageState extends State<LoginPage> {
             ),
           );
         } else {
-          // Altfel, mergi la pagina de "join/alegere locuință" cu userId-ul real
+          // Altfel, merg la pagina de "join/alegere locuință" cu userId-ul real
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -101,7 +101,7 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Paleta roz/liliachiu ca la login/signup
+   
     const paleRoyalBlue = Color(0xFF7E9BFF);
     const palePurple    = Color(0xFFD3B8FF);
     const palePink      = Color(0xFFFFD8F1);

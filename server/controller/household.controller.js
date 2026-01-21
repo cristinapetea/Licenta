@@ -1,6 +1,4 @@
-// server/controller/household.controller.js
-// ❌ era: const Household = require('./model/Household');
-const Household = require('../model/Household'); // ✅ corect
+const Household = require('../model/Household'); 
 const { Types } = require('mongoose');
 
 function generateInviteCode() {
@@ -66,7 +64,6 @@ exports.create = async (req, res) => {
     console.error('create household error:', e.message || e);
     console.error('Full error stack:', e.stack);
     
-    // Handle specific MongoDB errors
     if (e.name === 'ValidationError') {
       return res.status(400).json({ error: 'Validation error: ' + e.message });
     }
@@ -119,7 +116,7 @@ exports.mine = async (req, res) => {
   }
 };
 
-// GET /api/households/:id/members - obține membrii unui household
+// GET /api/households/:id/members 
 exports.getMembers = async (req, res) => {
   try {
     const userIdStr = req.user?.sub || req.user?.id || req.user;
@@ -139,7 +136,6 @@ exports.getMembers = async (req, res) => {
       return res.status(404).json({ error: 'Household not found' });
     }
     
-    // Verifică dacă utilizatorul este membru
     const isMember = hh.members.some(m => String(m._id) === String(userId));
     if (!isMember) {
       return res.status(403).json({ error: 'You are not a member of this household' });

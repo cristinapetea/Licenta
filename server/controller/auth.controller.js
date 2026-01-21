@@ -1,114 +1,62 @@
-// import unic, cu nume clar
-/* const UserModel = require('../model/User');
-
-// POST /api/auth/register
-exports.register = async (req, res) => {
-  try {
-    const { name, email, password } = req.body;
-
-    const doc = await UserModel.create({
-      name,
-      email,
-      password,                 // (hash adăugăm ulterior)
-    });
-
-    res.status(201).json({ message: 'User created', id: doc._id });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-};
-
-// POST /api/auth/login
-exports.login = async (req, res) => {
-  try {
-    const { email, password } = req.body;         // CHEI: email, password
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Missing fields' });
-    }
-
-    const user = await UserModel.findOne({ email });
-    if (!user) return res.status(401).json({ error: 'Invalid credentials' });
-
-    const ok = await bcrypt.compare(password, user.password);
-    if (!ok) return res.status(401).json({ error: 'Invalid credentials' });
-
-    // opțional: token
-    const token = jwt.sign({ sub: user._id }, process.env.JWT_SECRET || 'dev', { expiresIn: '7d' });
-
-    return res.status(200).json({
-      
-      name: user.name,
-      email: user.email,
-      token
-    });
-  } catch (e) {
-    console.error(e);
-    return res.status(500).json({ error: 'Server error' });
-  }
-};
-*/
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const User = require('../model/User'); // nume unitar
-/*
-// POST /api/auth/register
-exports.register = async (req, res) => {
-  try {
-    const { name, email, password } = req.body;
-    if (!name || !email || !password)
-      return res.status(400).json({ error: 'Missing fields' });
-
-    const exists = await User.findOne({ email });
-    if (exists) return res.status(409).json({ error: 'Email already in use' });
-
-    const hash = await bcrypt.hash(password, 10);
-    const doc = await User.create({ name, email, password: hash });
-
-    return res.status(201).json({ message: 'User created', id: doc._id });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: 'Server error' });
-  }
-};
-*/
-
+const User = require('../model/User'); 
 
 exports.register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
-    const hashed = await bcrypt.hash(password, 10);   // ✅ HASH
+    // Validare input
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'Please fill in all fields' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+    }
+
+    // Verificare email existent
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ error: 'An account with this email already exists' });
+    }
+
+    const hashed = await bcrypt.hash(password, 10);   
     const doc = await User.create({
       name,
       email,
-      password: hashed,                               // ✅ salvezi HASH-ul
+      password: hashed,                               
     });
 
-    return res.status(201).json({ message: 'User created', id: doc._id });
+    return res.status(201).json({ message: 'Account created successfully', id: doc._id });
   } catch (err) {
-    return res.status(400).json({ error: err.message });
+    console.error('Registration error:', err);
+    return res.status(500).json({ error: 'Unable to create account. Please try again.' });
   }
 };
 
-// POST /api/auth/login
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    if (!email || !password) return res.status(400).json({ error: 'Missing fields' });
+    
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Please enter your email and password' });
+    }
 
     const user = await User.findOne({ email });
-    if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+    if (!user) {
+      return res.status(401).json({ error: 'Incorrect email or password' });
+    }
 
-    // întâi încearcă bcrypt (pentru conturile noi)
     let ok = false;
     try { ok = await bcrypt.compare(password, user.password); } catch (_) {}
 
-    // fallback pentru conturile vechi salvate în clar
     if (!ok && password === user.password) ok = true;
 
-    if (!ok) return res.status(401).json({ error: 'Invalid credentials' });
+    if (!ok) {
+      return res.status(401).json({ error: 'Incorrect email or password' });
+    }
 
-    // Verifică dacă utilizatorul are deja un household
     const Household = require('../model/Household');
     const households = await Household.find({ members: user._id }).select('_id name').limit(1);
     const hasHousehold = households.length > 0;
@@ -122,42 +70,38 @@ exports.login = async (req, res) => {
     });
   } catch (e) {
     console.error('Login error:', e);
-    return res.status(500).json({ error: 'Server error' });
+    return res.status(500).json({ error: 'Unable to log in. Please try again later.' });
   }
 };
 
-// POST /api/auth/reset-password
 exports.resetPassword = async (req, res) => {
   try {
     const { email, newPassword } = req.body;
     
     if (!email || !newPassword) {
-      return res.status(400).json({ error: 'Email and new password are required' });
+      return res.status(400).json({ error: 'Please provide your email and new password' });
     }
     
     if (newPassword.length < 6) {
-      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+      return res.status(400).json({ error: 'Password must be at least 6 characters long' });
     }
     
-    // Găsește user-ul după email
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(404).json({ error: 'User not found with this email' });
+      return res.status(404).json({ error: 'No account found with this email address' });
     }
     
-    // Hash-uiește noua parolă
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     
-    // Actualizează parola
     user.password = hashedPassword;
     await user.save();
     
     return res.status(200).json({ 
-      message: 'Password updated successfully',
+      message: 'Password updated successfully! You can now log in.',
       email: user.email 
     });
   } catch (e) {
     console.error('Reset password error:', e);
-    return res.status(500).json({ error: 'Server error' });
+    return res.status(500).json({ error: 'Unable to reset password. Please try again.' });
   }
 };
