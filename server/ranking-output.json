@@ -1,0 +1,230 @@
+{
+  "householdId": "691a1acbcc1ce7336613116d",
+  "householdName": "Casa Vesela",
+  "members": [
+    {
+      "memberId": "696f634f1b9efcfc81dd1cef",
+      "memberName": "test",
+      "aiScore": 100,
+      "totalTasks": 1,
+      "completedTasks": 1,
+      "completionRate": 100,
+      "avgSpeed": 100,
+      "consistency": 100,
+      "topStrengths": [
+        {
+          "category": "cooking",
+          "displayName": "Cooking dinner",
+          "score": 84,
+          "completionRate": 100,
+          "onTimeRate": 100,
+          "totalDone": 1,
+          "total": 1
+        }
+      ],
+      "rank": 1
+    },
+    {
+      "memberId": "6920193f50d36a96cf1350a2",
+      "memberName": "Cristina",
+      "aiScore": 83.6,
+      "totalTasks": 228,
+      "completedTasks": 192,
+      "completionRate": 84,
+      "avgSpeed": 77,
+      "consistency": 93,
+      "topStrengths": [
+        {
+          "category": "shopping",
+          "displayName": "Shopping",
+          "score": 95.2,
+          "completionRate": 88,
+          "onTimeRate": 100,
+          "totalDone": 7,
+          "total": 8
+        },
+        {
+          "category": "dishes",
+          "displayName": "Starting dishwasher",
+          "score": 92.8,
+          "completionRate": 100,
+          "onTimeRate": 82,
+          "totalDone": 11,
+          "total": 11
+        },
+        {
+          "category": "trash",
+          "displayName": "Taking out trash",
+          "score": 90,
+          "completionRate": 92,
+          "onTimeRate": 83,
+          "totalDone": 12,
+          "total": 13
+        }
+      ],
+      "rank": 2
+    },
+    {
+      "memberId": "69382d18adb8854c4b901b1e",
+      "memberName": "Mama",
+      "aiScore": 83.5,
+      "totalTasks": 227,
+      "completedTasks": 201,
+      "completionRate": 89,
+      "avgSpeed": 74,
+      "consistency": 85,
+      "topStrengths": [
+        {
+          "category": "shopping",
+          "displayName": "Shopping",
+          "score": 93.2,
+          "completionRate": 83,
+          "onTimeRate": 100,
+          "totalDone": 5,
+          "total": 6
+        },
+        {
+          "category": "cleaning",
+          "displayName": "Cleaning",
+          "score": 90,
+          "completionRate": 100,
+          "onTimeRate": 75,
+          "totalDone": 16,
+          "total": 16
+        },
+        {
+          "category": "cooking",
+          "displayName": "Cooking dinner",
+          "score": 89.6,
+          "completionRate": 92,
+          "onTimeRate": 82,
+          "totalDone": 22,
+          "total": 24
+        }
+      ],
+      "rank": 3
+    },
+    {
+      "memberId": "69382d9eadb8854c4b901b47",
+      "memberName": "Tata",
+      "aiScore": 82.3,
+      "totalTasks": 235,
+      "completedTasks": 201,
+      "completionRate": 86,
+      "avgSpeed": 76,
+      "consistency": 84,
+      "topStrengths": [
+        {
+          "category": "dishes",
+          "displayName": "Starting dishwasher",
+          "score": 96,
+          "completionRate": 90,
+          "onTimeRate": 100,
+          "totalDone": 9,
+          "total": 10
+        },
+        {
+          "category": "shopping",
+          "displayName": "Shopping",
+          "score": 86.8,
+          "completionRate": 100,
+          "onTimeRate": 67,
+          "totalDone": 6,
+          "total": 6
+        },
+        {
+          "category": "trash",
+          "displayName": "Taking out trash",
+          "score": 85.2,
+          "completionRate": 96,
+          "onTimeRate": 67,
+          "totalDone": 24,
+          "total": 25
+        }
+      ],
+      "rank": 4
+    },
+    {
+      "memberId": "690f64daebc822ee9f473db3",
+      "memberName": "Denisa",
+      "aiScore": 81.9,
+      "totalTasks": 227,
+      "completedTasks": 191,
+      "completionRate": 84,
+      "avgSpeed": 77,
+      "consistency": 83,
+      "topStrengths": [
+        {
+          "category": "dishes",
+          "displayName": "Starting dishwasher",
+          "score": 90,
+          "completionRate": 92,
+          "onTimeRate": 83,
+          "totalDone": 12,
+          "total": 13
+        },
+        {
+          "category": "trash",
+          "displayName": "Taking out trash",
+          "score": 84.4,
+          "completionRate": 82,
+          "onTimeRate": 79,
+          "totalDone": 14,
+          "total": 17
+        },
+        {
+          "category": "shopping",
+          "displayName": "Shopping",
+          "score": 83.6,
+          "completionRate": 88,
+          "onTimeRate": 71,
+          "totalDone": 7,
+          "total": 8
+        }
+      ],
+      "rank": 5
+    },
+    {
+      "memberId": "696e6e91d371ce08b61e7588",
+      "memberName": "Ade",
+      "aiScore": 80.9,
+      "totalTasks": 210,
+      "completedTasks": 175,
+      "completionRate": 83,
+      "avgSpeed": 76,
+      "consistency": 83,
+      "topStrengths": [
+        {
+          "category": "cooking",
+          "displayName": "Cooking dinner",
+          "score": 86.8,
+          "completionRate": 85,
+          "onTimeRate": 82,
+          "totalDone": 28,
+          "total": 33
+        },
+        {
+          "category": "cleaning",
+          "displayName": "Cleaning",
+          "score": 84.4,
+          "completionRate": 76,
+          "onTimeRate": 85,
+          "totalDone": 13,
+          "total": 17
+        },
+        {
+          "category": "trash",
+          "displayName": "Taking out trash",
+          "score": 83.2,
+          "completionRate": 85,
+          "onTimeRate": 73,
+          "totalDone": 11,
+          "total": 13
+        }
+      ],
+      "rank": 6
+    }
+  ],
+  "generatedBy": "AI - Task Success Prediction",
+  "trainedOn": "2026-01-25T13:36:18.463Z"
+}

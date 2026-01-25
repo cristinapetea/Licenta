@@ -104,7 +104,7 @@ async function getMemberStats(memberId, householdId) {
       const hasOnTimeData = catCompleted.some(t => t.completedOnTime !== undefined);
       const onTimeRate = hasOnTimeData 
         ? (catCompleted.length > 0 ? Math.round((catOnTime.length / catCompleted.length) * 100) : 0)
-        : Math.round((catCompleted.length / catTasks.length) * 100);
+        : Math.round((catCompleted.length / catTasks.length) * 100); // Use completion rate as proxy
       
       categoryStats[cat] = {
         total: catTasks.length,
@@ -249,6 +249,9 @@ class TaskSuccessAI {
     };
   }
 
+  /**
+   * 🏆 Generează ranking complet cu top strengths per membru
+   */
   async generateRanking(householdId) {
     const household = await Household.findById(householdId).populate('members');
     if (!household) throw new Error('Household not found');
@@ -262,6 +265,7 @@ class TaskSuccessAI {
     for (const member of household.members) {
       const memberStats = await getMemberStats(member._id, householdId);
       
+      // Calculează scor bazat pe stats reale
       const score = (
         memberStats.avgCompletion * 50 +
         memberStats.avgSpeed * 30 +
@@ -281,10 +285,11 @@ class TaskSuccessAI {
           const stats = memberStats.categoryStats[cat];
           if (!stats || stats.total === 0) return null;
           
+          // Score per categorie: completion rate + on-time rate + consistency
           const categoryScore = (
             stats.completionRate * 0.4 +
             stats.onTimeRate * 0.4 +
-            (stats.total >= 5 ? 20 : stats.total * 4)
+            (stats.total >= 5 ? 20 : stats.total * 4) // Bonus pentru experiență
           );
           
           return {
