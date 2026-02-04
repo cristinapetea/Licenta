@@ -28,41 +28,43 @@ class _RankingPageState extends State<RankingPage> {
     _loadRanking();
   }
 
-  Future<void> _loadRanking() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+ Future<void> _loadRanking() async {
+  setState(() {
+    _loading = true;
+    _error = null;
+  });
 
-    try {
-      final uri = Uri.parse(
-          '${Api.base}/api/performance/ranking?householdId=${widget.householdId}');
-      final resp = await http.get(
-        uri,
-        headers: {
-          'Content-Type': 'application/json',
-          'x-user': widget.userId,
-        },
-      ).timeout(const Duration(seconds: 15));
+  try {
+   final uri = Uri.parse(
+  '${Api.base}/api/ai/ranking?householdId=${widget.householdId}'
+);
+    
+    final resp = await http.get(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user': widget.userId,
+      },
+    ).timeout(const Duration(seconds: 15));
 
-      if (resp.statusCode == 200) {
-        setState(() {
-          _rankingData = jsonDecode(resp.body);
-          _loading = false;
-        });
-      } else {
-        setState(() {
-          _error = 'Failed to load ranking';
-          _loading = false;
-        });
-      }
-    } catch (e) {
+    if (resp.statusCode == 200) {
       setState(() {
-        _error = 'Error: $e';
+        _rankingData = jsonDecode(resp.body);
+        _loading = false;
+      });
+    } else {
+      setState(() {
+        _error = 'Failed to load ranking';
         _loading = false;
       });
     }
+  } catch (e) {
+    setState(() {
+      _error = 'Error: $e';
+      _loading = false;
+    });
   }
+}
 
   @override
   Widget build(BuildContext context) {

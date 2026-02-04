@@ -1,7 +1,6 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const performanceRoutes = require('./routers/performanceRoutes');
 const aiRoutes = require('./routers/aiRoutes');
 
 
@@ -33,8 +32,6 @@ app.use('/api/auth', require('./routers/auth.router'));
 app.use('/api/households', require('./routers/household.router'));
 app.use('/api/tasks', require('./routers/task.router'));
 
-
-app.use('/api/performance', performanceRoutes);
 
 app.use('/api/ai', aiRoutes);
 

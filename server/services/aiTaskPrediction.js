@@ -249,6 +249,10 @@ class TaskSuccessAI {
     };
   }
 
+  /**
+   * 🏆 Generează ranking compatibil cu Flutter
+   * Flutter așteaptă: totalCompleted, overallCompletionRate, top3Strengths
+   */
   async generateRanking(householdId) {
     const household = await Household.findById(householdId).populate('members');
     if (!household) throw new Error('Household not found');
@@ -304,13 +308,15 @@ class TaskSuccessAI {
       rankings.push({
         memberId: member._id.toString(),
         memberName: member.name,
+        rank: 0, // Va fi setat mai jos
         aiScore: Math.round(score * 10) / 10,
         totalTasks: tasks.length,
-        completedTasks: completedTasks.length,
+        totalCompleted: completedTasks.length, // ✅ Flutter așteaptă "totalCompleted"
+        overallCompletionRate: Math.round(memberStats.avgCompletion * 100), // ✅ Flutter așteaptă "overallCompletionRate"
         completionRate: Math.round(memberStats.avgCompletion * 100),
         avgSpeed: Math.round(memberStats.avgSpeed * 100),
         consistency: Math.round(memberStats.consistency * 100),
-        topStrengths: strengths
+        top3Strengths: strengths // ✅ Flutter așteaptă "top3Strengths"
       });
     }
     
