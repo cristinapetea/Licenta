@@ -40,6 +40,97 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
     super.dispose();
   }
 
+  // ⭐⭐⭐ FUNCȚIE NOUĂ: Parsează textul și separă în items ⭐⭐⭐
+  List<String> _parseShoppingItems(String text) {
+    print('📝 Parsing text: $text');
+    
+    // Normalizează textul
+    String normalized = text.toLowerCase().trim();
+    
+    // Lista de cuvinte cheie pentru separare
+    final separators = [
+      ' și ',
+      ' si ',
+      ' plus ',
+      ', ',
+      ' cu ',
+      ' iar ',
+      ' de asemenea ',
+      ' mai vreau ',
+      ' și mai vreau ',
+      ' mai trebuie ',
+    ];
+    
+    // Înlocuiește toți separatorii cu un separator unic
+    for (var separator in separators) {
+      normalized = normalized.replaceAll(separator, '|SEPARATOR|');
+    }
+    
+    // Separă pe baza separatorului
+    List<String> rawItems = normalized.split('|SEPARATOR|');
+    print('🔪 Split into: $rawItems');
+    
+    // Curăță și procesează fiecare item
+    List<String> items = [];
+    for (var item in rawItems) {
+      String cleaned = item.trim();
+      
+      // Elimină prefixe comune
+      cleaned = cleaned.replaceFirst(RegExp(r'^(vreau sa cumpar|cumpar|imi trebuie|mai trebuie|trebuie|vreau)\s+'), '');
+      
+      // Normalizează cantități și măsuri
+      cleaned = _normalizeQuantities(cleaned);
+      
+      if (cleaned.isNotEmpty && cleaned.length > 2) {
+        // Capitalize prima literă
+        cleaned = cleaned[0].toUpperCase() + cleaned.substring(1);
+        items.add(cleaned);
+      }
+    }
+    
+    print('✅ Final items: $items');
+    return items;
+  }
+
+  // ⭐ Normalizează cantități (transformă cuvinte în cifre)
+  String _normalizeQuantities(String text) {
+    // Înlocuiește "doua" cu "2", "trei" cu "3", etc.
+    final numbers = {
+      'un ': '1 ',
+      'unu ': '1 ',
+      'o ': '1 ',
+      'doi ': '2 ',
+      'doua ': '2 ',
+      'două ': '2 ',
+      'trei ': '3 ',
+      'patru ': '4 ',
+      'cinci ': '5 ',
+      'sase ': '6 ',
+      'șase ': '6 ',
+      'șapte ': '7 ',
+      'sapte ': '7 ',
+      'opt ': '8 ',
+      'noua ': '9 ',
+      'nouă ': '9 ',
+      'zece ': '10 ',
+    };
+    
+    String result = text;
+    numbers.forEach((word, num) {
+      result = result.replaceAll(word, num);
+    });
+    
+    // Normalizează unități de măsură
+    result = result.replaceAll('kilograme', 'kg');
+    result = result.replaceAll('kilogram', 'kg');
+    result = result.replaceAll('grame', 'g');
+    result = result.replaceAll('gram', 'g');
+    result = result.replaceAll('litri', 'l');
+    result = result.replaceAll('litru', 'l');
+    
+    return result;
+  }
+
   Future<void> _loadShoppingList() async {
     setState(() => _isLoading = true);
     
@@ -54,9 +145,6 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
         },
       ).timeout(const Duration(seconds: 10));
 
-      print('Response status: ${resp.statusCode}');
-      print('Response body: ${resp.body}');
-
       if (resp.statusCode == 200) {
         final task = jsonDecode(resp.body);
         setState(() {
@@ -65,36 +153,19 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
         });
         print('Loaded ${_items.length} items');
       } else {
-        print('Failed to load: ${resp.statusCode}');
         setState(() => _isLoading = false);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Failed to load: ${resp.statusCode}'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
       }
     } catch (e) {
       print('Error loading shopping list: $e');
       setState(() => _isLoading = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
     }
   }
 
-  Future<void> _addItem(String itemName) async {
+  // ⭐ Adaugă un singur item
+  Future<void> _addSingleItem(String itemName) async {
     if (itemName.trim().isEmpty) return;
 
     try {
-      print('Adding item: $itemName');
       final uri = Uri.parse('${Api.base}/api/tasks/${widget.taskId}/shopping');
       final resp = await http.post(
         uri,
@@ -105,34 +176,42 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
         body: jsonEncode({'item': itemName.trim()}),
       ).timeout(const Duration(seconds: 10));
 
-      print('Add item response: ${resp.statusCode}');
-      print('Response body: ${resp.body}');
-
-      if (resp.statusCode == 201 || resp.statusCode == 200) {
-        _itemController.clear();
-        await _loadShoppingList();
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('✅ "$itemName" added to shopping list'),
-              backgroundColor: Colors.green,
-              duration: const Duration(seconds: 1),
-            ),
-          );
-        }
-      } else {
+      if (resp.statusCode != 201 && resp.statusCode != 200) {
         print('Failed to add item: ${resp.statusCode}');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error adding item: ${resp.statusCode}'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
       }
     } catch (e) {
       print('Error adding item: $e');
+    }
+  }
+
+  // ⭐⭐⭐ FUNCȚIE NOUĂ: Adaugă mai multe items dintr-o dată ⭐⭐⭐
+  Future<void> _addMultipleItems(List<String> items) async {
+    if (items.isEmpty) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      print('🛒 Adding ${items.length} items: $items');
+      
+      // Adaugă fiecare item
+      for (String item in items) {
+        await _addSingleItem(item);
+      }
+
+      // Reîncarcă lista
+      await _loadShoppingList();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✅ ${items.length} items added: ${items.join(", ")}'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error adding multiple items: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -141,12 +220,43 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
           ),
         );
       }
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  // ⭐⭐⭐ FUNCȚIE ACTUALIZATĂ: Detectează automat dacă e un item sau mai multe ⭐⭐⭐
+  Future<void> _addItem(String itemName) async {
+    if (itemName.trim().isEmpty) return;
+
+    // Verifică dacă textul conține separatori (și, si, plus, virgulă)
+    if (itemName.contains(RegExp(r' și | si | plus |, '))) {
+      print('🔍 Detected multiple items in text');
+      // Parsează și adaugă multiple items
+      List<String> items = _parseShoppingItems(itemName);
+      await _addMultipleItems(items);
+      _itemController.clear();
+    } else {
+      print('📦 Adding single item');
+      // Adaugă un singur item
+      await _addSingleItem(itemName);
+      _itemController.clear();
+      await _loadShoppingList();
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✅ "$itemName" added'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 1),
+          ),
+        );
+      }
     }
   }
 
   Future<void> _toggleItem(String itemId, bool currentState) async {
     try {
-      print('Toggling item: $itemId');
       final uri = Uri.parse('${Api.base}/api/tasks/${widget.taskId}/shopping/$itemId/toggle');
       final resp = await http.patch(
         uri,
@@ -155,8 +265,6 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
           'x-user': widget.userId,
         },
       ).timeout(const Duration(seconds: 10));
-
-      print('Toggle response: ${resp.statusCode}');
 
       if (resp.statusCode == 200) {
         await _loadShoppingList();
@@ -168,7 +276,6 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
 
   Future<void> _deleteItem(String itemId) async {
     try {
-      print('Deleting item: $itemId');
       final uri = Uri.parse('${Api.base}/api/tasks/${widget.taskId}/shopping/$itemId');
       final resp = await http.delete(
         uri,
@@ -178,8 +285,6 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
         },
       ).timeout(const Duration(seconds: 10));
 
-      print('Delete response: ${resp.statusCode}');
-
       if (resp.statusCode == 200) {
         await _loadShoppingList();
       }
@@ -188,6 +293,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
     }
   }
 
+  // ⭐⭐⭐ FUNCȚIE ACTUALIZATĂ: Voice input cu parsing inteligent ⭐⭐⭐
   Future<void> _startListening() async {
     bool available = await _speech.initialize(
       onStatus: (status) => print('Speech status: $status'),
@@ -202,13 +308,18 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
             _itemController.text = result.recognizedWords;
           });
           
-          
+          // Când vorbirea s-a terminat
           if (result.finalResult) {
-            _addItem(_itemController.text);
+            String spokenText = _itemController.text;
+            print('🎤 Spoken text: $spokenText');
+            
+            // ⭐ Parsează și adaugă items automat!
+            _addItem(spokenText);
+            
             _stopListening();
           }
         },
-        localeId: 'ro_RO', 
+        localeId: 'ro_RO',
       );
     } else {
       if (mounted) {
@@ -245,42 +356,60 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
           Container(
             color: Colors.white,
             padding: const EdgeInsets.all(16),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: _itemController,
-                    decoration: InputDecoration(
-                      hintText: 'Add item...',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _itemController,
+                        decoration: InputDecoration(
+                          hintText: 'e.g., "2 kg mere și 500g zahăr"',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                        ),
+                        onSubmitted: _addItem,
                       ),
                     ),
-                    onSubmitted: _addItem,
+                    const SizedBox(width: 8),
+                    // Microphone button
+                    IconButton(
+                      icon: Icon(
+                        _isListening ? Icons.mic : Icons.mic_none,
+                        color: _isListening ? Colors.red : paleRoyalBlue,
+                      ),
+                      iconSize: 32,
+                      onPressed: _isListening ? _stopListening : _startListening,
+                      tooltip: _isListening ? 'Stop' : 'Speak',
+                    ),
+                    // Add button
+                    IconButton(
+                      icon: const Icon(Icons.add_circle, color: paleRoyalBlue),
+                      iconSize: 32,
+                      onPressed: () => _addItem(_itemController.text),
+                      tooltip: 'Add',
+                    ),
+                  ],
+                ),
+                // ⭐ Hint text pentru voice input
+                if (_isListening)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      '🎤 Listening...',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.red[700],
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                // Microphone button
-                IconButton(
-                  icon: Icon(
-                    _isListening ? Icons.mic : Icons.mic_none,
-                    color: _isListening ? Colors.red : paleRoyalBlue,
-                  ),
-                  iconSize: 32,
-                  onPressed: _isListening ? _stopListening : _startListening,
-                  tooltip: _isListening ? 'Stop' : 'Speak',
-                ),
-                // Add button
-                IconButton(
-                  icon: const Icon(Icons.add_circle, color: paleRoyalBlue),
-                  iconSize: 32,
-                  onPressed: () => _addItem(_itemController.text),
-                  tooltip: 'Add',
-                ),
               ],
             ),
           ),
@@ -301,10 +430,6 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                               style: TextStyle(color: Colors.grey, fontSize: 16),
                             ),
                             SizedBox(height: 8),
-                            Text(
-                              'Tap the microphone to dictate',
-                              style: TextStyle(color: Colors.grey, fontSize: 14),
-                            ),
                           ],
                         ),
                       )
