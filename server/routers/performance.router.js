@@ -1,6 +1,7 @@
-// server/routers/performance.router.js
 const router = require('express').Router();
 const { Types } = require('mongoose');
+const { Worker } = require('worker_threads');
+const path = require('path');
 
 const fakeAuth = (req, res, next) => {
   const id = req.headers['x-user'];
@@ -11,7 +12,19 @@ const fakeAuth = (req, res, next) => {
   next();
 };
 
-// GET /api/performance/ranking?householdId=xxx
+function runWorker(workerPath, workerData) {
+  return new Promise((resolve, reject) => {
+    const worker = new Worker(workerPath, { workerData });
+    worker.on('message', (message) => {
+      message.success ? resolve(message.data) : reject(new Error(message.error || 'Worker failed'));
+    });
+    worker.on('error', reject);
+    worker.on('exit', (code) => {
+      if (code !== 0) reject(new Error(`Worker stopped with exit code ${code}`));
+    });
+  });
+}
+
 router.get('/ranking', fakeAuth, async (req, res) => {
   try {
     const { householdId } = req.query;
@@ -22,14 +35,25 @@ router.get('/ranking', fakeAuth, async (req, res) => {
     
     console.log('📊 Getting ranking for household:', householdId);
     
-    // TODO: Worker thread implementation
-    res.json({
-      members: [],
-      message: 'Ranking endpoint ready - worker implementation pending'
-    });
+    const workerPath = path.join(__dirname, '../workers/performance-worker.js');
+    const fs = require('fs');
+    
+    if (!fs.existsSync(workerPath)) {
+      console.warn('⚠️ Performance worker not found at:', workerPath);
+      return res.json({
+        members: [],
+        message: 'Performance worker not implemented yet'
+      });
+    }
+    
+    console.log('🚀 Running performance worker...');
+    const ranking = await runWorker(workerPath, { householdId });
+    
+    console.log('✅ Ranking generated with', ranking.members?.length || 0, 'members');
+    res.json(ranking);
     
   } catch (err) {
-    console.error('❌ Error:', err);
+    console.error('❌ Error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });

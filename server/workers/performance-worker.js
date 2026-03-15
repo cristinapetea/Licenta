@@ -151,7 +151,7 @@ async function analyzeMemberPerformance(memberId, memberName, householdId) {
   const top3 = categoryScores.slice(0, 3);
   
   return {
-    memberId,
+    memberId: memberId.toString(),  // ✅ Convertește ObjectId la string!
     memberName,
     totalTasks: allTasks.length,
     totalCompleted: allTasks.filter(t => t.status === 'completed').length,

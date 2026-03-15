@@ -6,6 +6,8 @@ import 'profile_page.dart';
 import 'group_tasks_page.dart';
 import 'personal_tasks_page.dart';
 import 'ranking_page.dart';
+import 'recommendations_page.dart';
+import 'recommendations_page.dart';
 
 class HomePage extends StatefulWidget {
   final String? userId;
@@ -129,6 +131,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     const paleRoyalBlue = Color(0xFF7E9BFF);
     const palePurple    = Color(0xFFD3B8FF);
+    const paleOrange    = Color(0xFFFFB74D);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -144,7 +147,6 @@ class _HomePageState extends State<HomePage> {
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              // HEADER
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -175,7 +177,6 @@ class _HomePageState extends State<HomePage> {
 
               const SizedBox(height: 24),
 
-              // KPI CARDS
               if (_loadingStats)
                 const Center(child: CircularProgressIndicator(color: Colors.white))
               else
@@ -209,7 +210,6 @@ class _HomePageState extends State<HomePage> {
 
               const SizedBox(height: 24),
 
-              // QUICK ACTIONS
               Card(
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 child: Padding(
@@ -274,7 +274,128 @@ class _HomePageState extends State<HomePage> {
 
               const SizedBox(height: 16),
 
-              // PROGRESS INDICATOR
+              GestureDetector(
+                onTap: () async {
+                  if (_householdId != null && _userId != null) {
+                    // Show loading
+                    showDialog(
+                      context: context,
+                      barrierDismissible: false,
+                      builder: (_) => const Center(
+                        child: CircularProgressIndicator(color: Colors.white),
+                      ),
+                    );
+
+                    try {
+                      // Load performance data
+                      final uri = Uri.parse('${Api.base}/api/performance/ranking?householdId=$_householdId');
+                      final resp = await http.get(
+                        uri,
+                        headers: {'x-user': _userId!},
+                      ).timeout(const Duration(seconds: 15));
+
+                      Navigator.pop(context); // Close loading
+
+                      if (resp.statusCode == 200) {
+                        final data = jsonDecode(resp.body);
+                        final members = data['members'] as List?;
+                        
+                        if (members != null) {
+                          final myData = members.firstWhere(
+                            (m) => m['memberId'] == _userId,
+                            orElse: () => null,
+                          );
+
+                          if (myData != null) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => RecommendationsPage(
+                                  userId: _userId!,
+                                  householdId: _householdId!,
+                                  performanceData: myData,
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+                        }
+                      }
+                      
+                      // Fallback - open without data
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => RecommendationsPage(
+                            userId: _userId!,
+                            householdId: _householdId!,
+                          ),
+                        ),
+                      );
+                    } catch (e) {
+                      Navigator.pop(context); // Close loading
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Error: $e')),
+                      );
+                    }
+                  }
+                },
+                child: Card(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  color: paleOrange.withOpacity(0.15),
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: paleOrange.withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            Icons.lightbulb_outline,
+                            color: paleOrange,
+                            size: 28,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Personal Tips & Recommendations',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey[800],
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Get AI-powered suggestions based on your performance',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(
+                          Icons.arrow_forward_ios,
+                          color: paleOrange,
+                          size: 20,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
               if (!_loadingStats && _stats['total'] != null && _stats['total'] > 0)
                 Card(
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -318,7 +439,6 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
 
-      // BOTTOM NAVIGATION
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           color: Colors.white,

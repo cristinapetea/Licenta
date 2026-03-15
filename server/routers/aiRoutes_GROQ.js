@@ -214,6 +214,7 @@ Return ONLY the JSON array, no markdown, no explanation:`
   }
 });
 
+// ⭐⭐⭐ VERSIUNEA CU GROQ API - GRATUIT ȘI RAPID! ⭐⭐⭐
 router.post('/personal-recommendations', async (req, res) => {
   try {
     const { userId, householdId, performanceData } = req.body;
@@ -222,8 +223,13 @@ router.post('/personal-recommendations', async (req, res) => {
       return res.status(400).json({ error: 'userId and householdId required' });
     }
 
+    if (!performanceData) {
+      return res.status(400).json({ error: 'performanceData required' });
+    }
+
     console.log('🤖 Generating recommendations with Groq AI for user:', userId);
 
+    // ⭐ GROQ API - FREE și RAPID!
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -231,7 +237,7 @@ router.post('/personal-recommendations', async (req, res) => {
         'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'llama-3.1-8b-instant',
+        model: 'llama-3.1-70b-versatile',
         messages: [{
           role: 'user',
           content: `Analyze this household member's task performance and generate personalized recommendations.
@@ -266,7 +272,7 @@ Guidelines:
 - Keep suggestions actionable and friendly
 - Use English language
 
-Return ONLY valid JSON, no markdown.`
+Return ONLY valid JSON, no markdown, no explanation.`
         }],
         temperature: 0.7,
         max_tokens: 2048
@@ -281,6 +287,8 @@ Return ONLY valid JSON, no markdown.`
 
     const data = await response.json();
     const content = data.choices[0].message.content.trim();
+    
+    // Curăță eventual markdown
     const cleaned = content.replace(/```json\n?|\n?```/g, '').trim();
     const recommendations = JSON.parse(cleaned);
 

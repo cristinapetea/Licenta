@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../api.dart';
+import 'recommendations_page.dart';
 
 class RankingPage extends StatefulWidget {
   final String userId;
@@ -28,43 +29,51 @@ class _RankingPageState extends State<RankingPage> {
     _loadRanking();
   }
 
- Future<void> _loadRanking() async {
-  setState(() {
-    _loading = true;
-    _error = null;
-  });
+  Future<void> _loadRanking() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
 
-  try {
-   final uri = Uri.parse(
-  '${Api.base}/api/ai/ranking?householdId=${widget.householdId}'
-);
-    
-    final resp = await http.get(
-      uri,
-      headers: {
-        'Content-Type': 'application/json',
-        'x-user': widget.userId,
-      },
-    ).timeout(const Duration(seconds: 15));
+    try {
+      print('🔍 Loading ranking from /api/performance/ranking');
+      
+      final uri = Uri.parse(
+        '${Api.base}/api/performance/ranking?householdId=${widget.householdId}'
+      );
+      
+      final resp = await http.get(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user': widget.userId,
+        },
+      ).timeout(const Duration(seconds: 15));
 
-    if (resp.statusCode == 200) {
+      print('📊 Ranking response: ${resp.statusCode}');
+      print('📊 Response body: ${resp.body}');
+
+      if (resp.statusCode == 200) {
+        final data = jsonDecode(resp.body);
+        setState(() {
+          _rankingData = data;
+          _loading = false;
+        });
+        print('✅ Ranking loaded: ${data['members']?.length ?? 0} members');
+      } else {
+        setState(() {
+          _error = 'Failed to load ranking: ${resp.statusCode}';
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      print('❌ Error loading ranking: $e');
       setState(() {
-        _rankingData = jsonDecode(resp.body);
-        _loading = false;
-      });
-    } else {
-      setState(() {
-        _error = 'Failed to load ranking';
+        _error = 'Error: $e';
         _loading = false;
       });
     }
-  } catch (e) {
-    setState(() {
-      _error = 'Error: $e';
-      _loading = false;
-    });
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -83,7 +92,6 @@ class _RankingPageState extends State<RankingPage> {
         child: SafeArea(
           child: Column(
             children: [
-              // Header
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Row(
@@ -103,12 +111,10 @@ class _RankingPageState extends State<RankingPage> {
                         textAlign: TextAlign.center,
                       ),
                     ),
-                    const SizedBox(width: 48), // Balance the back button
+                    const SizedBox(width: 48),
                   ],
                 ),
               ),
-
-              // Content
               Expanded(
                 child: _loading
                     ? const Center(
@@ -124,6 +130,7 @@ class _RankingPageState extends State<RankingPage> {
                                 Text(
                                   _error!,
                                   style: const TextStyle(color: Colors.white),
+                                  textAlign: TextAlign.center,
                                 ),
                                 const SizedBox(height: 16),
                                 ElevatedButton(
@@ -172,6 +179,9 @@ class _RankingPageState extends State<RankingPage> {
             completedTasks: member['totalCompleted'],
             top3Strengths: member['top3Strengths'] as List,
             isCurrentUser: isCurrentUser,
+            userId: currentUserId,
+            householdId: widget.householdId,
+            performanceData: member,
           );
         },
       ),
@@ -187,6 +197,9 @@ class _MemberRankCard extends StatelessWidget {
   final int completedTasks;
   final List top3Strengths;
   final bool isCurrentUser;
+  final String userId;
+  final String householdId;
+  final Map<String, dynamic> performanceData;
 
   const _MemberRankCard({
     required this.rank,
@@ -196,6 +209,9 @@ class _MemberRankCard extends StatelessWidget {
     required this.completedTasks,
     required this.top3Strengths,
     required this.isCurrentUser,
+    required this.userId,
+    required this.householdId,
+    required this.performanceData,
   });
 
   String _getRankEmoji(int rank) {
@@ -214,11 +230,11 @@ class _MemberRankCard extends StatelessWidget {
   Color _getRankColor(int rank) {
     switch (rank) {
       case 1:
-        return const Color(0xFFFFD700); // Gold
+        return const Color(0xFFFFD700);
       case 2:
-        return const Color(0xFFC0C0C0); // Silver
+        return const Color(0xFFC0C0C0);
       case 3:
-        return const Color(0xFFCD7F32); // Bronze
+        return const Color(0xFFCD7F32);
       default:
         return Colors.grey;
     }
@@ -239,7 +255,6 @@ class _MemberRankCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header with rank and name
             Row(
               children: [
                 Container(
@@ -303,10 +318,7 @@ class _MemberRankCard extends StatelessWidget {
                 ),
               ],
             ),
-
             const SizedBox(height: 16),
-
-            // Progress bar
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: LinearProgressIndicator(
@@ -316,7 +328,6 @@ class _MemberRankCard extends StatelessWidget {
                 minHeight: 8,
               ),
             ),
-
             if (top3Strengths.isNotEmpty) ...[
               const SizedBox(height: 16),
               const Text(
@@ -339,6 +350,37 @@ class _MemberRankCard extends StatelessWidget {
                   onTimeRate: strength['onTimeRate'],
                 );
               }).toList(),
+            ],
+            
+            if (isCurrentUser) ...[
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => RecommendationsPage(
+                          userId: userId,
+                          householdId: householdId,
+                          performanceData: performanceData,
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.lightbulb_outline),
+                  label: const Text('Get Personal Tips'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFFFB74D),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
             ],
           ],
         ),
