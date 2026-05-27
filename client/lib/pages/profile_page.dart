@@ -44,15 +44,15 @@ class _ProfilePageState extends State<ProfilePage> {
     });
 
     try {
-      // Obține informațiile despre utilizator
+  
       _userData = {
         'id': widget.userId,
         'name': widget.userName,
       };
       
-      // Dacă nu avem nume, îl obținem din membrii household-ului
+     
       if (widget.userName == null) {
-        // Vom încerca să obținem numele din membrii household-ului mai jos
+        
       }
 
       // Dacă avem householdId, obține membrii
@@ -78,7 +78,7 @@ class _ProfilePageState extends State<ProfilePage> {
           });
         }
       } else {
-        // Dacă nu avem householdId, încercăm să obținem household-urile utilizatorului
+        
         final uri = Uri.parse('${Api.base}/api/households/mine');
         final resp = await http.get(
           uri,
@@ -111,7 +111,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   _householdData = data['household'];
                   _members = List<Map<String, dynamic>>.from(data['members']);
                   
-                  // Obține numele utilizatorului din membrii household-ului dacă nu l-am primit
+                 
                   if (widget.userName == null) {
                     final currentUser = _members.firstWhere(
                       (m) => m['id']?.toString() == widget.userId,
@@ -189,7 +189,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               ),
                               const Expanded(
                                 child: Text(
-                                  'Profile',
+                                  'My household',
                                   style: TextStyle(
                                     fontSize: 24,
                                     fontWeight: FontWeight.w700,
@@ -202,7 +202,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
                           const SizedBox(height: 24),
 
-                          // User Greeting Card
+                          
                           Card(
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
@@ -232,7 +232,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
                           const SizedBox(height: 16),
 
-                          // Household Info Card
+                          
                           if (_householdData != null)
                             Card(
                               shape: RoundedRectangleBorder(

@@ -88,44 +88,44 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  void _onTabTapped(int index) {
-    setState(() {
-      _currentIndex = index;
-    });
+ void _onTabTapped(int index) {
+  setState(() {
+    _currentIndex = index;
+  });
 
-    if (_userId == null) return;
+  if (_userId == null) return;
 
-    if (index == 1 && _householdId != null) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => GroupTasksPage(
-            userId: _userId!,
-            householdId: _householdId!,
-            householdName: _householdName,
-          ),
+  if (index == 0 && _householdId != null) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => GroupTasksPage(
+          userId: _userId!,
+          householdId: _householdId!,
+          householdName: _householdName,
         ),
-      ).then((_) => _loadStats());
-    } else if (index == 2) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => PersonalTasksPage(userId: _userId!),
+      ),
+    ).then((_) => _loadStats());
+  } else if (index == 1) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PersonalTasksPage(userId: _userId!),
+      ),
+    ).then((_) => _loadStats());
+  } else if (index == 2) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ProfilePage(
+          userId: _userId!,
+          userName: widget.userName,
+          householdId: _householdId,
         ),
-      ).then((_) => _loadStats());
-    } else if (index == 3) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => ProfilePage(
-            userId: _userId!,
-            userName: widget.userName,
-            householdId: _householdId,
-          ),
-        ),
-      );
-    }
+      ),
+    );
   }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -168,10 +168,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                     ],
                   ),
-                  IconButton(
-                    onPressed: () {},
-                    icon: const Icon(Icons.notifications_none, color: Colors.white),
-                  ),
+                  
                 ],
               ),
 
@@ -277,7 +274,7 @@ class _HomePageState extends State<HomePage> {
               GestureDetector(
                 onTap: () async {
                   if (_householdId != null && _userId != null) {
-                    // Show loading
+                   
                     showDialog(
                       context: context,
                       barrierDismissible: false,
@@ -287,14 +284,14 @@ class _HomePageState extends State<HomePage> {
                     );
 
                     try {
-                      // Load performance data
+                      
                       final uri = Uri.parse('${Api.base}/api/performance/ranking?householdId=$_householdId');
                       final resp = await http.get(
                         uri,
                         headers: {'x-user': _userId!},
                       ).timeout(const Duration(seconds: 15));
 
-                      Navigator.pop(context); // Close loading
+                      Navigator.pop(context); 
 
                       if (resp.statusCode == 200) {
                         final data = jsonDecode(resp.body);
@@ -322,7 +319,7 @@ class _HomePageState extends State<HomePage> {
                         }
                       }
                       
-                      // Fallback - open without data
+                     
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -333,7 +330,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                       );
                     } catch (e) {
-                      Navigator.pop(context); // Close loading
+                      Navigator.pop(context); 
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text('Error: $e')),
                       );
@@ -458,10 +455,7 @@ class _HomePageState extends State<HomePage> {
           currentIndex: _currentIndex,
           onTap: _onTabTapped,
           items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              label: 'Home',
-            ),
+           
             BottomNavigationBarItem(
               icon: Icon(Icons.group_outlined),
               label: 'Group',
@@ -472,7 +466,7 @@ class _HomePageState extends State<HomePage> {
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.account_circle_outlined),
-              label: 'Profile',
+              label: 'My household',
             ),
           ],
         ),
