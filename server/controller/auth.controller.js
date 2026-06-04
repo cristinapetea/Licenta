@@ -6,7 +6,6 @@ exports.register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
-    // Validare input
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'Please fill in all fields' });
     }
@@ -15,7 +14,6 @@ exports.register = async (req, res) => {
       return res.status(400).json({ error: 'Password must be at least 6 characters long' });
     }
 
-    // Verificare email existent
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ error: 'An account with this email already exists' });

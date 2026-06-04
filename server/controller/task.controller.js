@@ -2,20 +2,10 @@ const Task = require('../model/Task');
 const Household = require('../model/Household');
 const { Types } = require('mongoose');
 
-
-//CREATE
 exports.create = async (req, res) => {
   try {
-    console.log('=== CREATE TASK DEBUG ===');
-    console.log('Headers:', req.headers);
-    console.log('Body:', req.body);
-    console.log('req.user:', req.user);
-    
     const userIdStr = req.headers['x-user'] || req.user?.sub || req.user?.id || req.user;
-    console.log('Extracted userIdStr:', userIdStr);
-    
     if (!userIdStr) {
-      console.log('ERROR: No user ID found');
       return res.status(401).json({ error: 'User ID is required' });
     }
     
@@ -40,29 +30,23 @@ exports.create = async (req, res) => {
       points: points || 0,
     };
     
-    
     if (type === 'group') {
       if (!householdId) {
         return res.status(400).json({ error: 'householdId is required for group tasks' });
       }
-      
-      
       const hh = await Household.findById(householdId);
       if (!hh) {
         return res.status(404).json({ error: 'Household not found' });
       }
-      
       const isMember = hh.members.some(m => String(m) === String(userId));
       if (!isMember) {
         return res.status(403).json({ error: 'You are not a member of this household' });
       }
-      
       taskData.household = new Types.ObjectId(householdId);
       if (assignedTo) {
         taskData.assignedTo = new Types.ObjectId(assignedTo);
       }
     }
-    
     
     if (type === 'personal') {
       taskData.category = category;
@@ -75,12 +59,10 @@ exports.create = async (req, res) => {
     
     return res.status(201).json(populated);
   } catch (e) {
-    console.error('create task error:', e.message || e);
     return res.status(500).json({ error: e.message || 'Server error' });
   }
 };
 
-// GET
 exports.list = async (req, res) => {
   try {
     const userIdStr = req.user?.sub || req.user?.id || req.user;
@@ -122,14 +104,10 @@ exports.list = async (req, res) => {
     
     return res.json(tasks);
   } catch (e) {
-    console.error('list tasks error:', e.message || e);
     return res.status(500).json({ error: e.message || 'Server error' });
   }
 };
 
-
-
-// UPDATE 
 exports.update = async (req, res) => {
   try {
     const userIdStr = req.user?.sub || req.user?.id || req.user;
@@ -146,14 +124,12 @@ exports.update = async (req, res) => {
       return res.status(404).json({ error: 'Task not found' });
     }
     
-    
     if (task.status === 'failed') {
       return res.status(403).json({ 
         error: 'Cannot modify failed tasks',
         message: 'This task has passed its deadline and cannot be completed anymore.'
       });
     }
-    
     
     if (task.type === 'personal') {
       if (String(task.owner) !== String(userId)) {
@@ -170,25 +146,17 @@ exports.update = async (req, res) => {
       }
     }
     
-    // Update status 
     if (updates.status === 'completed' && task.status !== 'completed') {
       updates.completedAt = new Date();
       updates.completedBy = userId;
-      
-      // Performance
       Object.assign(task, updates);
       task.calculatePerformance();
       await task.save();
-      
-      console.log(`✅ Task completed: ${task.title}`);
-      console.log(`⏱️  Time to complete: ${task.timeToComplete} minutes`);
-      console.log(`${task.completedOnTime ? '✅' : '⏰'} Completed on time: ${task.completedOnTime}`);
     } else if (updates.status === 'active') {
       updates.completedAt = undefined;
       updates.completedBy = undefined;
       updates.timeToComplete = undefined;
       updates.completedOnTime = undefined;
-      
       Object.assign(task, updates);
       await task.save();
     } else {
@@ -203,17 +171,12 @@ exports.update = async (req, res) => {
     
     return res.json(populated);
   } catch (e) {
-    console.error('update task error:', e.message || e);
     return res.status(500).json({ error: e.message || 'Server error' });
   }
 };
 
-// UPDATE WITH PHOTO 
 exports.updateWithPhoto = async (req, res) => {
   try {
-    console.log('=== UPDATE WITH PHOTO ===');
-    console.log('File received:', req.file);
-    
     const userIdStr = req.user?.sub || req.user?.id || req.user;
     if (!userIdStr) {
       return res.status(401).json({ error: 'User ID is required' });
@@ -227,7 +190,6 @@ exports.updateWithPhoto = async (req, res) => {
       return res.status(404).json({ error: 'Task not found' });
     }
 
-    
     if (task.status === 'failed') {
       return res.status(403).json({ 
         error: 'Cannot complete failed tasks',
@@ -236,24 +198,15 @@ exports.updateWithPhoto = async (req, res) => {
     }
 
     if (!req.file) {
-      console.log('❌ No file in request');
       return res.status(400).json({ error: 'Photo file is required' });
     }
 
-    // Save photo + mark as completed
     task.photo = `/uploads/${req.file.filename}`;
     task.status = 'completed';
     task.completedAt = new Date();
     task.completedBy = userId;
-    
-    
     task.calculatePerformance();
-
     await task.save();
-
-    console.log('✅ Photo saved successfully:', task.photo);
-    console.log(`⏱️  Time to complete: ${task.timeToComplete} minutes`);
-    console.log(`${task.completedOnTime ? '✅' : '⏰'} Completed on time: ${task.completedOnTime}`);
 
     const populated = await Task.findById(task._id)
       .populate('assignedTo', 'name email')
@@ -262,13 +215,10 @@ exports.updateWithPhoto = async (req, res) => {
 
     return res.json(populated);
   } catch (e) {
-    console.error('❌ updateWithPhoto error:', e);
     return res.status(500).json({ error: 'Server error' });
   }
 };
 
-
-// DELETE 
 exports.delete = async (req, res) => {
   try {
     const userIdStr = req.user?.sub || req.user?.id || req.user;
@@ -283,7 +233,6 @@ exports.delete = async (req, res) => {
     if (!task) {
       return res.status(404).json({ error: 'Task not found' });
     }
-    
     
     if (task.type === 'personal') {
       if (String(task.owner) !== String(userId)) {
@@ -303,12 +252,10 @@ exports.delete = async (req, res) => {
     await Task.findByIdAndDelete(id);
     return res.json({ message: 'Task deleted', id });
   } catch (e) {
-    console.error('delete task error:', e.message || e);
     return res.status(500).json({ error: e.message || 'Server error' });
   }
 };
 
-// GET stats 
 exports.stats = async (req, res) => {
   try {
     const userIdStr = req.user?.sub || req.user?.id || req.user;
@@ -352,12 +299,10 @@ exports.stats = async (req, res) => {
       points: points[0]?.total || 0
     });
   } catch (e) {
-    console.error('stats error:', e.message || e);
     return res.status(500).json({ error: e.message || 'Server error' });
   }
 };
 
-// Shopping List Operations
 exports.addShoppingItem = async (req, res) => {
   try {
     const userIdStr = req.user?.sub || req.user?.id || req.user;
@@ -382,7 +327,6 @@ exports.addShoppingItem = async (req, res) => {
     
     return res.json(task);
   } catch (e) {
-    console.error('add shopping item error:', e);
     return res.status(500).json({ error: 'Server error' });
   }
 };
@@ -406,7 +350,6 @@ exports.toggleShoppingItem = async (req, res) => {
     
     return res.json(task);
   } catch (e) {
-    console.error('toggle shopping item error:', e);
     return res.status(500).json({ error: 'Server error' });
   }
 };
@@ -425,19 +368,13 @@ exports.deleteShoppingItem = async (req, res) => {
     
     return res.json(task);
   } catch (e) {
-    console.error('delete shopping item error:', e);
     return res.status(500).json({ error: 'Server error' });
   }
 };
 
-
-
-// GET single task by ID
 exports.getById = async (req, res) => {
   try {
     const { id } = req.params;
-    
-    console.log('Getting task by ID:', id);
     
     const task = await Task.findById(id)
       .populate('assignedTo', 'name email')
@@ -445,20 +382,15 @@ exports.getById = async (req, res) => {
       .populate('completedBy', 'name email');
     
     if (!task) {
-      console.log('Task not found');
       return res.status(404).json({ error: 'Task not found' });
     }
     
-    console.log('Task found, shoppingList items:', task.shoppingList.length);
     return res.json(task);
   } catch (e) {
-    console.error('get task by id error:', e);
     return res.status(500).json({ error: 'Server error' });
   }
 };
 
-
-// GET performance stats 
 exports.performanceStats = async (req, res) => {
   try {
     const userIdStr = req.user?.sub || req.user?.id || req.user;
@@ -504,7 +436,6 @@ exports.performanceStats = async (req, res) => {
       }
     }
     
-    // Failed tasks
     const failedTasks = await Task.countDocuments({
       ...filter,
       status: 'failed'
@@ -517,7 +448,6 @@ exports.performanceStats = async (req, res) => {
     
     return res.json(stats);
   } catch (e) {
-    console.error('performance stats error:', e);
     return res.status(500).json({ error: 'Server error' });
   }
 };

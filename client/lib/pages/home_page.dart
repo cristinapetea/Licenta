@@ -229,7 +229,7 @@ class _HomePageState extends State<HomePage> {
                               icon: Icons.group,
                               label: 'Group\nTasks',
                               color: paleRoyalBlue,
-                              onTap: () => _onTabTapped(1),
+                              onTap: () => _onTabTapped(0),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -238,7 +238,7 @@ class _HomePageState extends State<HomePage> {
                               icon: Icons.person,
                               label: 'Personal\nTasks',
                               color: palePurple,
-                              onTap: () => _onTabTapped(2),
+                              onTap: () => _onTabTapped(1),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -405,7 +405,7 @@ class _HomePageState extends State<HomePage> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             const Text(
-                              'Weekly Progress',
+                              'Lifetime Progress',
                               style: TextStyle(fontWeight: FontWeight.w600),
                             ),
                             Text(

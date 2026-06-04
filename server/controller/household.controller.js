@@ -16,20 +16,16 @@ exports.create = async (req, res) => {
       return res.status(401).json({ error: 'User ID is required' });
     }
     
-    // Convert userId to ObjectId
     let userId;
     try {
       userId = new Types.ObjectId(userIdStr);
     } catch (e) {
-      console.error('Invalid userId format:', userIdStr);
       return res.status(400).json({ error: 'Invalid user ID format' });
     }
     
     const { name, address } = req.body;
     if (!name) return res.status(400).json({ error: 'name is required' });
 
-    console.log('Generating invite code...');
-    // Generate unique invite code
     let code;
     let tries = 0;
     const maxTries = 10;
@@ -45,11 +41,9 @@ exports.create = async (req, res) => {
     }
 
     if (!found) {
-      console.error('Failed to generate unique invite code after', maxTries, 'tries');
       return res.status(500).json({ error: 'Failed to generate unique invite code' });
     }
 
-    console.log('Creating household with code:', code);
     const doc = await Household.create({
       name, 
       address: address || undefined,
@@ -58,7 +52,6 @@ exports.create = async (req, res) => {
       members: [userId],
     });
 
-    console.log('Household created successfully:', doc._id);
     return res.status(201).json({ id: doc._id, name: doc.name, inviteCode: doc.inviteCode });
   } catch (e) {
     console.error('create household error:', e.message || e);
@@ -95,7 +88,6 @@ exports.joinByCode = async (req, res) => {
     }
     return res.json({ id: hh._id, name: hh.name, inviteCode: hh.inviteCode });
   } catch (e) {
-    console.error('join household error:', e.message || e);
     return res.status(500).json({ error: e.message || 'Server error' });
   }
 };
@@ -111,12 +103,11 @@ exports.mine = async (req, res) => {
     const list = await Household.find({ members: userId }).select('_id name inviteCode stats');
     return res.json(list);
   } catch (e) {
-    console.error('mine households error:', e.message || e);
     return res.status(500).json({ error: e.message || 'Server error' });
   }
 };
 
-// GET /api/households/:id/members 
+
 exports.getMembers = async (req, res) => {
   try {
     const userIdStr = req.user?.sub || req.user?.id || req.user;
@@ -161,7 +152,6 @@ exports.getMembers = async (req, res) => {
       })),
     });
   } catch (e) {
-    console.error('get members error:', e.message || e);
     return res.status(500).json({ error: e.message || 'Server error' });
   }
 };
