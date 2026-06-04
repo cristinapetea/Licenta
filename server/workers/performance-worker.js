@@ -1,14 +1,13 @@
-// workers/performance-worker.js
+
 const { parentPort, workerData } = require('worker_threads');
 const mongoose = require('mongoose');
 require('dotenv').config();
 
-// Import models
+
 const Task = require('../model/Task');
 const Household = require('../model/Household');
 const User = require('../model/User');
 
-// ⭐ Funcțiile tale de analiză (copiază din analyze-performance.js)
 function calculatePerformanceScore(tasks) {
   if (tasks.length === 0) return 0;
 
@@ -161,18 +160,16 @@ async function analyzeMemberPerformance(memberId, memberName, householdId) {
   };
 }
 
-// ⭐⭐⭐ LOGICA PRINCIPALĂ - RULEAZĂ ÎN BACKGROUND! ⭐⭐⭐
 async function run() {
   try {
     console.log('🔧 Worker started with data:', workerData);
     
-    // Conectare la MongoDB
+
     await mongoose.connect(process.env.MONGO_URI || process.env.MONGODB_URI);
     console.log('✅ Worker connected to MongoDB');
     
     const { householdId } = workerData;
-    
-    // Găsește household-ul
+
     const household = await Household.findById(householdId).populate('members');
     
     if (!household) {
@@ -181,7 +178,7 @@ async function run() {
     
     const results = [];
     
-    // Analizează fiecare membru
+
     for (const member of household.members) {
       const analysis = await analyzeMemberPerformance(member._id, member.name, householdId);
       if (analysis) {
@@ -189,17 +186,16 @@ async function run() {
       }
     }
     
-    // Sortează după completion rate
+
     results.sort((a, b) => b.overallCompletionRate - a.overallCompletionRate);
     
-    // Adaugă rank
+
     results.forEach((result, index) => {
       result.rank = index + 1;
     });
     
     console.log('✅ Worker finished analysis');
     
-    // ⭐ Trimite rezultatele înapoi la main thread
     parentPort.postMessage({ 
       success: true, 
       data: { members: results } 

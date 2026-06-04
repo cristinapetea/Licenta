@@ -138,7 +138,8 @@ class TaskSuccessAI {
   constructor() {
     this.net = new brain.NeuralNetwork({
       hiddenLayers: [16, 12, 8],
-      activation: 'sigmoid'
+      activation: 'sigmoid',
+      gpu: false
     });
     this.isTrained = false;
     this.trainingStats = null;

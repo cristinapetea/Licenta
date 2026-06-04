@@ -48,9 +48,7 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
 
       if (resp.statusCode == 200) {
         final data = jsonDecode(resp.body);
-        setState(() {
-          _members = data['members'] ?? [];
-        });
+        setState(() => _members = data['members'] ?? []);
       }
     } catch (e) {
       print('Error loading members: $e');
@@ -63,21 +61,14 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
       final uri = Uri.parse(
         '${Api.base}/api/tasks?type=group&householdId=${widget.householdId}&status=$_currentFilter',
       );
-      
-      print('Loading tasks with filter: $_currentFilter');
-      print('Request URL: $uri');
-      
+
       final resp = await http.get(
         uri,
         headers: {'Content-Type': 'application/json', 'x-user': widget.userId},
       ).timeout(const Duration(seconds: 10));
 
-      print('Response status: ${resp.statusCode}');
-      
       if (resp.statusCode == 200) {
         final tasks = jsonDecode(resp.body) as List;
-        print('Loaded ${tasks.length} tasks with status: $_currentFilter');
-        
         setState(() {
           _tasks = tasks;
           _isLoading = false;
@@ -118,7 +109,7 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
 
   Future<void> _completeWithPhoto(String taskId) async {
     final ImagePicker picker = ImagePicker();
-    
+
     final source = await showDialog<ImageSource>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -152,14 +143,12 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
       );
 
       if (photo == null) return;
-
       if (!mounted) return;
+
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (ctx) => const Center(
-          child: CircularProgressIndicator(),
-        ),
+        builder: (ctx) => const Center(child: CircularProgressIndicator()),
       );
 
       final uri = Uri.parse('${Api.base}/api/tasks/$taskId/photo');
@@ -190,22 +179,12 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
             backgroundColor: Colors.red,
           ),
         );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to upload photo: ${response.statusCode}'),
-            backgroundColor: Colors.red,
-          ),
-        );
       }
     } catch (e) {
       if (!mounted) return;
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
       );
     }
   }
@@ -217,6 +196,40 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
     String? selectedMember;
     DateTime? selectedDate;
     TimeOfDay? selectedTime;
+    Map<String, dynamic>? aiRecommendation;
+    bool isLoadingAI = false;
+
+    Future<void> getAIRecommendation(String title, Function setDialogState) async {
+      if (title.trim().length < 3) return;
+
+      setDialogState(() => isLoadingAI = true);
+
+      try {
+        final uri = Uri.parse('${Api.base}/api/ai/recommend');
+        final resp = await http.post(
+          uri,
+          headers: {'Content-Type': 'application/json', 'x-user': widget.userId},
+          body: jsonEncode({
+            'taskTitle': title.trim(),
+            'householdId': widget.householdId,
+            'points': int.tryParse(pointsCtrl.text) ?? 10,
+          }),
+        ).timeout(const Duration(seconds: 15));
+
+        if (resp.statusCode == 200) {
+          final data = jsonDecode(resp.body);
+          setDialogState(() {
+            aiRecommendation = data['recommended'];
+            isLoadingAI = false;
+          });
+        } else {
+          setDialogState(() => isLoadingAI = false);
+        }
+      } catch (e) {
+        print('Error getting AI recommendation: $e');
+        setDialogState(() => isLoadingAI = false);
+      }
+    }
 
     showDialog(
       context: context,
@@ -230,7 +243,88 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                 TextField(
                   controller: titleCtrl,
                   decoration: const InputDecoration(labelText: 'Title *'),
+                  onSubmitted: (val) => getAIRecommendation(val, setDialogState),
+                  onEditingComplete: () => getAIRecommendation(titleCtrl.text, setDialogState),
                 ),
+                const SizedBox(height: 8),
+                if (isLoadingAI)
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF7E9BFF).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Row(
+                      children: [
+                        SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        SizedBox(width: 8),
+                        Text('AI analyzing...', style: TextStyle(fontSize: 13)),
+                      ],
+                    ),
+                  )
+                else if (aiRecommendation != null)
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF7E9BFF).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: const Color(0xFF7E9BFF).withOpacity(0.3),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.auto_awesome, size: 16, color: Color(0xFF7E9BFF)),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'AI suggests: ${aiRecommendation!['memberName']} (${aiRecommendation!['successProbability']}% success)',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFF7E9BFF),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                final recommended = _members.firstWhere(
+                                  (m) => m['id'].toString() == aiRecommendation!['memberId'],
+                                  orElse: () => null,
+                                );
+                                if (recommended != null) {
+                                  setDialogState(() => selectedMember = recommended['id'].toString());
+                                }
+                              },
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                minimumSize: Size.zero,
+                              ),
+                              child: const Text('Use', style: TextStyle(fontSize: 12)),
+                            ),
+                          ],
+                        ),
+                        if (aiRecommendation!['reason'] != null) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            aiRecommendation!['reason'],
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: descCtrl,
@@ -261,9 +355,7 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                             firstDate: DateTime.now(),
                             lastDate: DateTime.now().add(const Duration(days: 365)),
                           );
-                          if (date != null) {
-                            setDialogState(() => selectedDate = date);
-                          }
+                          if (date != null) setDialogState(() => selectedDate = date);
                         },
                         icon: const Icon(Icons.calendar_today),
                         label: Text(
@@ -281,9 +373,7 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                             context: dialogContext,
                             initialTime: TimeOfDay.now(),
                           );
-                          if (time != null) {
-                            setDialogState(() => selectedTime = time);
-                          }
+                          if (time != null) setDialogState(() => selectedTime = time);
                         },
                         icon: const Icon(Icons.access_time),
                         label: Text(
@@ -309,8 +399,6 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
               onPressed: () => Navigator.pop(dialogContext),
               child: const Text('Cancel'),
             ),
-            // În _showCreateTaskDialog(), înlocuiește secțiunea unde se construiește body-ul:
-
             ElevatedButton(
               onPressed: () async {
                 if (titleCtrl.text.trim().isEmpty) return;
@@ -326,16 +414,14 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                 if (selectedMember != null && selectedMember!.isNotEmpty) {
                   body['assignedTo'] = selectedMember!;
                 }
-                
-                // FIX: Trimite data în format local, nu UTC
+
                 if (selectedDate != null) {
-                  // Formatul: YYYY-MM-DD (fără timezone conversion)
                   final year = selectedDate!.year.toString();
                   final month = selectedDate!.month.toString().padLeft(2, '0');
                   final day = selectedDate!.day.toString().padLeft(2, '0');
                   body['dueDate'] = '$year-$month-$day';
                 }
-                
+
                 if (selectedTime != null) {
                   body['dueTime'] = '${selectedTime!.hour}:${selectedTime!.minute.toString().padLeft(2, '0')}';
                 }
@@ -351,8 +437,6 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                   if (resp.statusCode == 201) {
                     Navigator.pop(dialogContext);
                     _loadTasks();
-                  } else {
-                    print('Failed to create task: ${resp.statusCode} - ${resp.body}');
                   }
                 } catch (e) {
                   print('Error creating task: $e');
@@ -369,7 +453,7 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
   Future<void> _openShoppingList() async {
     String? shoppingTaskId;
     String? shoppingTaskTitle;
-    
+
     for (var task in _tasks) {
       if (task['title']?.toLowerCase().contains('shopping') == true ||
           task['title']?.toLowerCase().contains('groceries') == true) {
@@ -378,7 +462,7 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
         break;
       }
     }
-    
+
     if (shoppingTaskId == null) {
       try {
         final uri = Uri.parse('${Api.base}/api/tasks');
@@ -410,18 +494,14 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
           return;
         }
       } catch (e) {
-        print('Error creating shopping task: $e');
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
         );
         return;
       }
     }
-    
+
     if (shoppingTaskId != null && mounted) {
       Navigator.push(
         context,
@@ -457,7 +537,6 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
       ),
       body: Column(
         children: [
-          // Filters
           Container(
             color: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 8),
@@ -467,41 +546,27 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                 _FilterChip(
                   label: 'Active',
                   selected: _currentFilter == 'active',
-                  onTap: () {
-                    setState(() => _currentFilter = 'active');
-                    _loadTasks();
-                  },
+                  onTap: () { setState(() => _currentFilter = 'active'); _loadTasks(); },
                 ),
                 _FilterChip(
                   label: 'Completed',
                   selected: _currentFilter == 'completed',
-                  onTap: () {
-                    setState(() => _currentFilter = 'completed');
-                    _loadTasks();
-                  },
+                  onTap: () { setState(() => _currentFilter = 'completed'); _loadTasks(); },
                 ),
                 _FilterChip(
                   label: 'Failed',
                   selected: _currentFilter == 'failed',
-                  onTap: () {
-                    setState(() => _currentFilter = 'failed');
-                    _loadTasks();
-                  },
+                  onTap: () { setState(() => _currentFilter = 'failed'); _loadTasks(); },
                   color: Colors.red,
                 ),
                 _FilterChip(
                   label: 'All',
                   selected: _currentFilter == 'all',
-                  onTap: () {
-                    setState(() => _currentFilter = 'all');
-                    _loadTasks();
-                  },
+                  onTap: () { setState(() => _currentFilter = 'all'); _loadTasks(); },
                 ),
               ],
             ),
           ),
-
-          // Task list
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -512,14 +577,11 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                           children: [
                             Icon(
                               _currentFilter == 'failed' ? Icons.check_circle : Icons.task_alt,
-                              size: 64,
-                              color: Colors.grey,
+                              size: 64, color: Colors.grey,
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              _currentFilter == 'failed' 
-                                  ? 'No failed tasks yet' 
-                                  : 'No tasks yet',
+                              _currentFilter == 'failed' ? 'No failed tasks yet' : 'No tasks yet',
                               style: const TextStyle(color: Colors.grey),
                             ),
                           ],
@@ -559,18 +621,9 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                                             if (isFailed) ...[
                                               Container(
                                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.red,
-                                                  borderRadius: BorderRadius.circular(8),
-                                                ),
-                                                child: const Text(
-                                                  '❌ FAILED - Deadline passed',
-                                                  style: TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 11,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
+                                                decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(8)),
+                                                child: const Text('❌ FAILED - Deadline passed',
+                                                    style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
                                               ),
                                               const SizedBox(height: 8),
                                             ],
@@ -585,10 +638,8 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                                             ),
                                             if (task['description']?.isNotEmpty == true) ...[
                                               const SizedBox(height: 4),
-                                              Text(
-                                                task['description'],
-                                                style: const TextStyle(fontSize: 14, color: Colors.grey),
-                                              ),
+                                              Text(task['description'],
+                                                  style: const TextStyle(fontSize: 14, color: Colors.grey)),
                                             ],
                                           ],
                                         ),
@@ -597,67 +648,46 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                                         Container(
                                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                                           decoration: BoxDecoration(
-                                            color: isFailed 
-                                                ? Colors.red.withOpacity(0.2)
-                                                : paleRoyalBlue.withOpacity(0.2),
+                                            color: isFailed ? Colors.red.withOpacity(0.2) : paleRoyalBlue.withOpacity(0.2),
                                             borderRadius: BorderRadius.circular(12),
                                           ),
-                                          child: Text(
-                                            '${task['points']}p',
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
+                                          child: Text('${task['points']}p',
+                                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                                         ),
                                     ],
                                   ),
-                                  
                                   const SizedBox(height: 8),
-                                  
                                   Padding(
                                     padding: const EdgeInsets.only(left: 48),
                                     child: Row(
                                       children: [
                                         const Icon(Icons.person, size: 14, color: Colors.grey),
                                         const SizedBox(width: 4),
-                                        Text(
-                                          assignedName,
-                                          style: const TextStyle(fontSize: 12, color: Colors.grey),
-                                        ),
+                                        Text(assignedName, style: const TextStyle(fontSize: 12, color: Colors.grey)),
                                         if (task['dueDate'] != null) ...[
                                           const SizedBox(width: 12),
                                           const Icon(Icons.calendar_today, size: 14, color: Colors.grey),
                                           const SizedBox(width: 4),
-                                          Text(
-                                            _formatDate(task['dueDate']),
-                                            style: const TextStyle(fontSize: 12, color: Colors.grey),
-                                          ),
+                                          Text(_formatDate(task['dueDate']),
+                                              style: const TextStyle(fontSize: 12, color: Colors.grey)),
                                         ],
                                       ],
                                     ),
                                   ),
-                                  
                                   if (task['photo'] != null) ...[
                                     const SizedBox(height: 12),
                                     ClipRRect(
                                       borderRadius: BorderRadius.circular(8),
                                       child: Image.network(
                                         '${Api.base}${task['photo']}',
-                                        height: 200,
-                                        width: double.infinity,
-                                        fit: BoxFit.cover,
+                                        height: 200, width: double.infinity, fit: BoxFit.cover,
                                         errorBuilder: (_, __, ___) => Container(
-                                          height: 200,
-                                          color: Colors.grey[300],
-                                          child: const Center(
-                                            child: Icon(Icons.broken_image, size: 48),
-                                          ),
+                                          height: 200, color: Colors.grey[300],
+                                          child: const Center(child: Icon(Icons.broken_image, size: 48)),
                                         ),
                                       ),
                                     ),
                                   ],
-                                  
                                   if (!isCompleted && !isFailed) ...[
                                     const SizedBox(height: 8),
                                     Center(
@@ -665,13 +695,10 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                                         onPressed: () => _completeWithPhoto(task['_id']),
                                         icon: const Icon(Icons.camera_alt, size: 18),
                                         label: const Text('Add photo'),
-                                        style: OutlinedButton.styleFrom(
-                                          foregroundColor: paleRoyalBlue,
-                                        ),
+                                        style: OutlinedButton.styleFrom(foregroundColor: paleRoyalBlue),
                                       ),
                                     ),
                                   ],
-                                  
                                   if (isFailed) ...[
                                     const SizedBox(height: 8),
                                     Container(
@@ -688,10 +715,7 @@ class _GroupTasksPageState extends State<GroupTasksPage> {
                                           Expanded(
                                             child: Text(
                                               'This task cannot be completed because the deadline has passed.',
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                color: Colors.red,
-                                              ),
+                                              style: TextStyle(fontSize: 12, color: Colors.red),
                                             ),
                                           ),
                                         ],
@@ -742,7 +766,6 @@ class _FilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final chipColor = color ?? const Color(0xFF7E9BFF);
-    
     return GestureDetector(
       onTap: onTap,
       child: Container(

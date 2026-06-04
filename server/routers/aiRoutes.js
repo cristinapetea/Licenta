@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const { Worker } = require('worker_threads');
 const path = require('path');
-const { getAI } = require('../services/aiTaskPrediction');
 
 function runWorker(workerPath, workerData) {
   return new Promise((resolve, reject) => {
@@ -17,118 +16,70 @@ function runWorker(workerPath, workerData) {
   });
 }
 
-router.get('/ranking', async (req, res) => {
-  try {
-    const { householdId } = req.query;
-    
-    if (!householdId) {
-      return res.status(400).json({ error: 'householdId is required' });
-    }
-    
-    const workerPath = path.join(__dirname, '../workers/performance-worker.js');
-    const fs = require('fs');
-    
-    if (!fs.existsSync(workerPath)) {
-      return res.json({
-        members: [],
-        message: 'Performance worker not implemented yet'
-      });
-    }
-    
-    const ranking = await runWorker(workerPath, { householdId });
-    res.json(ranking);
-    
-  } catch (err) {
-    console.error('Error generating ranking:', err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
-
 router.post('/recommend', async (req, res) => {
   try {
     const { taskTitle, points, dueDate, householdId } = req.body;
-    
+
     if (!taskTitle || !householdId) {
-      return res.status(400).json({ 
-        error: 'taskTitle and householdId are required' 
-      });
+      return res.status(400).json({ error: 'taskTitle and householdId are required' });
     }
-    
-    const workerPath = path.join(__dirname, '../workers/recommendation-worker.js');
-    const fs = require('fs');
-    
-    if (!fs.existsSync(workerPath)) {
-      const ai = getAI();
-      const recommendation = await ai.recommendMember(
-        { title: taskTitle, points, dueDate },
-        householdId
-      );
-      return res.json(recommendation);
-    }
-    
-    const recommendation = await runWorker(workerPath, {
-      task: { title: taskTitle, points, dueDate },
-      householdId
+
+    const ranking = await runWorker(
+      path.join(__dirname, '../workers/performance-worker.js'),
+      { householdId }
+    );
+
+    const simplifiedMembers = ranking.members.map(m => ({
+      memberId: m.memberId,
+      memberName: m.memberName,
+      aiScore: m.aiScore,
+      completionRate: m.overallCompletionRate,
+      top3Strengths: m.top3Strengths.map(s => s.displayName)
+    }));
+
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-8b-instant',
+        messages: [{
+          role: 'user',
+          content: `Given this household task: "${taskTitle}" (${points || 10} points)
+
+Members:
+${JSON.stringify(simplifiedMembers, null, 2)}
+
+Who is the best member to assign this task to based on their AI score and strengths?
+
+Return ONLY valid JSON, no markdown:
+{
+  "memberId": "the member's id",
+  "memberName": "the member's name",
+  "successProbability": 85,
+  "reason": "one sentence explanation"
+}`
+        }],
+        temperature: 0.3,
+        max_tokens: 256
+      })
     });
-    
-    res.json(recommendation);
-    
+
+    if (!response.ok) {
+      throw new Error(`Groq API failed: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const content = data.choices[0].message.content.trim();
+    const cleaned = content.replace(/```json\n?|\n?```/g, '').trim();
+    const recommendation = JSON.parse(cleaned);
+
+    res.json({ recommended: recommendation });
+
   } catch (err) {
     console.error('Error recommending member:', err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-router.post('/train', async (req, res) => {
-  try {
-    const { householdId } = req.body;
-    
-    if (!householdId) {
-      return res.status(400).json({ error: 'householdId is required' });
-    }
-    
-    const workerPath = path.join(__dirname, '../workers/ai-training-worker.js');
-    const fs = require('fs');
-    
-    if (!fs.existsSync(workerPath)) {
-      res.json({
-        success: true,
-        message: 'Training started',
-        status: 'processing'
-      });
-      
-      setImmediate(async () => {
-        try {
-          const ai = getAI();
-          await ai.train(householdId);
-        } catch (err) {
-          console.error('Training error:', err);
-        }
-      });
-      
-      return;
-    }
-    
-    res.json({
-      success: true,
-      message: 'AI training started on background thread',
-      status: 'processing'
-    });
-    
-    const worker = new Worker(workerPath, { workerData: { householdId } });
-    
-    worker.on('message', (message) => {
-      if (message.success) {
-        console.log('Training completed');
-      }
-    });
-    
-    worker.on('error', (error) => {
-      console.error('Worker error:', error);
-    });
-    
-  } catch (err) {
-    console.error('Error training AI:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
@@ -136,11 +87,11 @@ router.post('/train', async (req, res) => {
 router.post('/parse-shopping-list', async (req, res) => {
   try {
     const { spokenText } = req.body;
-    
+
     if (!spokenText) {
       return res.status(400).json({ error: 'spokenText is required' });
     }
-    
+
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -177,39 +128,33 @@ Output: ["2 kg mere", "500 g zahăr"]
 Input: "2 kg mere aș mai vrea și pâine și ouă"
 Output: ["2 kg mere", "Pâine", "Ouă"]
 
-Input: "lapte și brânză aș mai vrea și unt"
-Output: ["Lapte", "Brânză", "Unt"]
-
-Input: "2 kg cartofi 3 l apă 500 g făină 2 l de suc 1 calculator 2 baxuri de bere 1 uscător de păr"
-Output: ["2 kg cartofi", "3 l apă", "500 g făină", "2 l suc", "1 calculator", "2 baxuri bere", "1 uscător de păr"]
-
 Now parse: "${spokenText}"
 
 Return ONLY the JSON array, no markdown, no explanation:`
         }]
       })
     });
-    
+
     if (!response.ok) {
       throw new Error(`Claude API failed: ${response.status}`);
     }
-    
+
     const data = await response.json();
     const itemsText = data.content[0].text.trim();
     const cleanedText = itemsText.replace(/```json\n?|\n?```/g, '').trim();
     const items = JSON.parse(cleanedText);
-    
+
     res.json({ items });
-    
+
   } catch (err) {
     console.error('Error parsing shopping list:', err.message);
-    
+
     const fallbackItems = req.body.spokenText
       .split(/\s+și\s+|\s+si\s+|,\s*/i)
       .map(s => s.trim())
       .filter(s => s.length > 2)
       .map(s => s[0].toUpperCase() + s.substring(1));
-    
+
     res.json({ items: fallbackItems });
   }
 });
@@ -217,12 +162,24 @@ Return ONLY the JSON array, no markdown, no explanation:`
 router.post('/personal-recommendations', async (req, res) => {
   try {
     const { userId, householdId, performanceData } = req.body;
-    
+
     if (!userId || !householdId) {
       return res.status(400).json({ error: 'userId and householdId required' });
     }
 
-    console.log('🤖 Generating recommendations with Groq AI for user:', userId);
+    const simplifiedData = {
+      memberName: performanceData.memberName,
+      aiScore: performanceData.aiScore,
+      completionRate: performanceData.overallCompletionRate,
+      totalTasks: performanceData.totalTasks,
+      totalCompleted: performanceData.totalCompleted,
+      top3Strengths: (performanceData.top3Strengths || []).map(s => ({
+        name: s.displayName,
+        score: s.score,
+        completionRate: s.completionRate,
+        onTimeRate: s.onTimeRate
+      }))
+    };
 
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
@@ -237,7 +194,7 @@ router.post('/personal-recommendations', async (req, res) => {
           content: `Analyze this household member's task performance and generate personalized recommendations.
 
 Performance Data:
-${JSON.stringify(performanceData, null, 2)}
+${JSON.stringify(simplifiedData, null, 2)}
 
 Generate a JSON response:
 {
@@ -269,13 +226,11 @@ Guidelines:
 Return ONLY valid JSON, no markdown.`
         }],
         temperature: 0.7,
-        max_tokens: 2048
+        max_tokens: 1024
       })
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ Groq API error:', response.status, errorText);
       throw new Error(`Groq API failed: ${response.status}`);
     }
 
@@ -284,11 +239,10 @@ Return ONLY valid JSON, no markdown.`
     const cleaned = content.replace(/```json\n?|\n?```/g, '').trim();
     const recommendations = JSON.parse(cleaned);
 
-    console.log('✅ Recommendations generated successfully with Groq');
     res.json(recommendations);
 
   } catch (err) {
-    console.error('❌ Error generating recommendations:', err.message);
+    console.error('Error generating recommendations:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
