@@ -34,8 +34,6 @@ class _LoginPageState extends State<LoginPage> {
 
     setState(() => _loading = true);
 
-    // Ai Api.base = http://10.0.3.2:3000/api => nu mai pune încă un /api
-    //final uri = Uri.parse('${Api.base}${Api.auth}/login');
 
     final uri = Uri.parse('${Api.base}/api/auth/login');
 
@@ -67,7 +65,6 @@ class _LoginPageState extends State<LoginPage> {
           return;
         }
 
-        // Daca utilizatorul are deja un household, merg direct la home
         if (hasHousehold) {
           Navigator.pushReplacement(
             context,
@@ -76,7 +73,7 @@ class _LoginPageState extends State<LoginPage> {
             ),
           );
         } else {
-          // Altfel, merg la pagina de "join/alegere locuință" cu userId-ul real
+         
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -85,9 +82,15 @@ class _LoginPageState extends State<LoginPage> {
           );
         }
       } else {
+        String errorMsg = 'Autentificare eșuată';
+         try {
+            final errorData = jsonDecode(res.body);
+            errorMsg = errorData['error'] ?? errorMsg;
+          }  catch (_) {}
+
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Login failed: ${res.statusCode} ${res.body}')),
-        );
+          SnackBar(content: Text(errorMsg)),
+  );
       }
     } catch (e) {
       if (!mounted) return;

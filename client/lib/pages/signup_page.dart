@@ -54,8 +54,15 @@ class _SignUpPageState extends State<SignUpPage> {
       Navigator.pushReplacementNamed(context, '/login');
 
       } else {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Register failed: ${res.statusCode} ${res.body}')));
+        String errorMsg = 'This email address is already registered.';
+        try {
+          final errorData = jsonDecode(res.body);
+          errorMsg = errorData['error'] ?? errorMsg;
+        } catch (_) {}
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMsg)),
+        );
       }
     } catch (e) {
       if (!mounted) return;

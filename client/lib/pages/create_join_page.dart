@@ -109,12 +109,17 @@ class _CreateJoinPageState extends State<CreateJoinPage>
           ),
         );
       } else {
-        _toast('Create failed: ${resp.body}');
+        String errorMsg = 'Could not create home. Please try a different name.';
+          try {
+            final errorData = jsonDecode(resp.body);
+            errorMsg = errorData['error'] ?? errorMsg;
+          } catch (_) {}
+          _toast(errorMsg);
       }
     } catch (e) {
       print('Error creating home: $e');
       if (e.toString().contains('TimeoutException')) {
-        _toast('Server timeout - verifica dacă serverul rulează pe ${Api.base}');
+        _toast('Server timeout');
       } else if (e.toString().contains('Failed host lookup') || e.toString().contains('Connection refused')) {
         _toast('Nu se poate conecta la server - verifica dacă rulează');
       } else {
@@ -152,8 +157,13 @@ class _CreateJoinPageState extends State<CreateJoinPage>
           ),
         );
       } else {
-        _toast('Join failed: ${resp.body}');
-      }
+        String errorMsg = 'Invalid invite code. Please check it and try again.';
+          try {
+            final errorData = jsonDecode(resp.body);
+            errorMsg = errorData['error'] ?? errorMsg;
+          } catch (_) {}
+          _toast(errorMsg);
+              }
     } catch (e) {
       _toast('Join failed: $e');
     } finally {
@@ -198,7 +208,6 @@ class _CreateJoinPageState extends State<CreateJoinPage>
                     child: TabBarView(
                       controller: _tabs,
                       children: [
-                        // ===== CREATE TAB (layout-ul tău original) =====
                         SingleChildScrollView(
                           padding: const EdgeInsets.all(20),
                           child: Card(
