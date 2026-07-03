@@ -34,6 +34,14 @@ class _HomePageState extends State<HomePage> {
     _loadHouseholdId();
   }
 
+  void _logout() {
+    Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/login',
+        (route) => false,
+    );
+}
+
   Future<void> _loadHouseholdId() async {
     if (_userId == null) return;
     
@@ -148,29 +156,34 @@ class _HomePageState extends State<HomePage> {
             padding: const EdgeInsets.all(16),
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Welcome${widget.userName != null ? ', ${widget.userName}' : ''}!',
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                      if (_householdName != null)
-                        Text(
-                          _householdName!,
-                          style: const TextStyle(color: Colors.white70, fontSize: 14),
-                        ),
-                    ],
-                  ),
-                  
-                ],
-              ),
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+        Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+                Text(
+                    'Welcome${widget.userName != null ? ', ${widget.userName}' : ''}!',
+                    style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                    ),
+                ),
+                if (_householdName != null)
+                    Text(
+                        _householdName!,
+                        style: const TextStyle(color: Colors.white70, fontSize: 14),
+                    ),
+            ],
+        ),
+        
+        IconButton(
+            icon: const Icon(Icons.logout, color: Colors.white),
+            onPressed: _logout,
+            tooltip: 'Logout',
+        ),
+    ],
+),
 
               const SizedBox(height: 24),
 

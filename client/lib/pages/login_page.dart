@@ -52,7 +52,6 @@ class _LoginPageState extends State<LoginPage> {
       if (!mounted) return;
      
       if (res.statusCode == 200 || res.statusCode == 201) {
-        // Parse user data pentru a obține ID-ul real
         final data = jsonDecode(res.body);
         final userId = data['id']?.toString() ?? data['_id']?.toString();
         final userName = data['name']?.toString();
