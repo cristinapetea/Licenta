@@ -39,21 +39,27 @@ Clonare repository:
 Configurare fișier .env:
 Creați un fișier `.env` în folderul `server/` cu următorul conținut:
 
+```
 PORT=3000
 MONGO_URI=mongodb+srv://USER:PAROLA@cluster.mongodb.net/chorebuddy
-GROQ_API_KEY=gsk_...        # din console.groq.com → API Keys
+GROQ_API_KEY=gsk_...         # din console.groq.com → API Keys
 ANTHROPIC_API_KEY=sk-ant-... # din console.anthropic.com → API Keys
+```
        
        
 ## 5. Pași de instalare și lansare ai aplicației
        
-Server:
+### Server:
+```bash
 cd server
 npm install
 npm run dev
-       
-Client:
+```
+
+### Client:
+```bash
 cd client
 flutter pub get
 flutter run
+```
        
