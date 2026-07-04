@@ -47,14 +47,18 @@ ANTHROPIC_API_KEY=sk-ant-... # din console.anthropic.com → API Keys
        
 ## 5. Pași de instalare și lansare ai aplicației
        
-Server:
-- cd server
-- npm install
-- npm run dev
-       
-Client:
-- cd client
-- flutter pub get
-- flutter run
+### Server:
+```bash
+cd server
+npm install
+npm run dev
+```
+
+### Client:
+```bash
+cd client
+flutter pub get
+flutter run
+```
        
  
